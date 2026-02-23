@@ -1,33 +1,38 @@
+import { useEffect } from "react";
+
 export default function Book() {
-  return (
-    <div className="min-h-screen bg-gray-50 py-16 px-4 flex flex-col items-center">
-      <h1 className="text-4xl font-bold text-gray-800 mb-8">Book a Session</h1>
-      <form className="bg-white p-8 rounded-lg shadow-md w-full max-w-lg flex flex-col gap-4">
-        <input
-          type="text"
-          placeholder="Your Name"
-          className="border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <input
-          type="email"
-          placeholder="Your Email"
-          className="border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <input
-          type="date"
-          className="border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <textarea
-          placeholder="Additional Notes"
-          className="border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <button
-          type="submit"
-          className="bg-blue-600 text-white rounded px-4 py-2 hover:bg-blue-700 transition"
-        >
-          Book Now
-        </button>
-      </form>
-    </div>
-  );
+
+    useEffect(() => {
+        // Load Calendly script only once
+        if (!document.getElementById("calendly-widget")) {
+            const script = document.createElement("script");
+            script.src = "https://assets.calendly.com/assets/external/widget.js";
+            script.async = true;
+            script.id = "calendly-widget";
+            document.body.appendChild(script);
+        }
+    }, []);
+
+    return (
+        <div className="h-screen bg-gradient-to-br from-[#00F0FF] to-[#B0E0E6] flex flex-col overflow-hidden">
+
+            {/* Header */}
+            <div className="text-center py-8 px-4 shrink-0">
+                <h1 className="text-4xl font-bold text-black mb-2 tracking-tight">Book a Session</h1>
+                <p className="text-black/80 text-lg max-w-xl mx-auto">
+                    Choose a time that works for you — it'll sync directly to Google Calendar.
+                </p>
+            </div>
+
+            {/* Calendly — fills remaining space */}
+            <div className="flex-1 mx-4 mb-4 bg-white/90 backdrop-blur-sm border border-white/20 rounded-2xl overflow-hidden shadow-xl">
+                <div
+                    className="calendly-inline-widget w-full h-full"
+                    data-url="https://calendly.com/notiondgzmn/30min?background_color=96c0f3"
+                    style={{ minWidth: "320px", height: "100%" }}
+                />
+            </div>
+
+        </div>
+    );
 }
