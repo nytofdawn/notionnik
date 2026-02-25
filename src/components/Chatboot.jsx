@@ -103,7 +103,7 @@ export default function NotionnikChatBot() {
 
       {/* ── Chat Window ── */}
       {isOpen && (
-        <div className="w-80 h-[500px] bg-zinc-900 border border-zinc-700/60 rounded-2xl flex flex-col shadow-2xl overflow-hidden">
+        <div className="w-120 h-[700px] bg-zinc-900 border border-zinc-700/60 rounded-2xl flex flex-col shadow-2xl overflow-hidden">
 
           {/* Header */}
           <div className="bg-zinc-950 border-b border-zinc-800 px-4 py-3 flex items-center justify-between shrink-0">
