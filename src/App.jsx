@@ -6,7 +6,7 @@ import AboutUs from "./pages/AboutUs";
 import Services from "./pages/Services";
 import CaseStudies from "./pages/CaseStudies";
 import Book from "./pages/Book";
-import ChatBoot from "./components/Chatboot";
+import ChatBot from "./components/Chatboot";
 
 function App() {
   return (
@@ -20,7 +20,7 @@ function App() {
           <Route path="/book" element={<Book />} />
         </Routes>
         <Footer />
-        <ChatBoot />
+        <ChatBot />
     </Router>
   );
 }
