@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 
-// Replace with your Make webhook URL
 const WEBHOOK_URL = "https://hook.eu1.make.com/e45kq4zc7creuxjtjgk0b6ok9uryct1m";
 
 const INITIAL_MESSAGE = {
@@ -26,12 +25,10 @@ export default function NotionnikChatBot() {
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
-  // Scroll to bottom on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isSending]);
 
-  // Focus input & clear unread when opened
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => inputRef.current?.focus(), 100);
@@ -101,14 +98,13 @@ export default function NotionnikChatBot() {
   return (
     <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-3">
 
-      {/* ── Chat Window ── */}
+      {/* Chat Window */}
       {isOpen && (
-        <div className="w-120 h-[700px] bg-zinc-900 border border-zinc-700/60 rounded-2xl flex flex-col shadow-2xl overflow-hidden">
+        <div className="w-[90vw] sm:w-[350px] md:w-[400px] h-[70vh] sm:h-[500px] md:h-[700px] bg-zinc-900 border border-zinc-700/60 rounded-2xl flex flex-col shadow-2xl overflow-hidden">
 
           {/* Header */}
           <div className="bg-zinc-950 border-b border-zinc-800 px-4 py-3 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-3">
-              {/* Avatar */}
               <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-base shadow-lg shadow-violet-900/40 shrink-0">
                 ⚡
               </div>
@@ -123,7 +119,6 @@ export default function NotionnikChatBot() {
               </div>
             </div>
 
-            {/* Close */}
             <button
               onClick={() => setIsOpen(false)}
               className="w-7 h-7 rounded-lg bg-zinc-800 border border-zinc-700 text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors flex items-center justify-center text-sm"
@@ -134,14 +129,14 @@ export default function NotionnikChatBot() {
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
+          <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-2 sm:gap-3">
             {messages.map((msg) => (
               <div
                 key={msg.id}
                 className={`flex flex-col ${msg.sender === "user" ? "items-end" : "items-start"}`}
               >
                 <div
-                  className={`max-w-[82%] px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed break-words ${
+                  className={`max-w-[82%] px-3 py-2 rounded-2xl text-sm leading-relaxed break-words ${
                     msg.sender === "user"
                       ? "bg-violet-600 text-white rounded-br-sm"
                       : "bg-zinc-800 text-zinc-100 border border-zinc-700/60 rounded-bl-sm"
@@ -155,14 +150,13 @@ export default function NotionnikChatBot() {
                     msg.text
                   )}
                 </div>
-                <span className="text-[10px] text-zinc-500 mt-1 px-1">{msg.time}</span>
+                <span className="text-[10px] text-zinc-500 mt-0.5 px-1">{msg.time}</span>
               </div>
             ))}
 
-            {/* Typing indicator */}
             {isSending && (
               <div className="flex items-start">
-                <div className="bg-zinc-800 border border-zinc-700/60 rounded-2xl rounded-bl-sm px-4 py-3 flex items-center gap-1.5">
+                <div className="bg-zinc-800 border border-zinc-700/60 rounded-2xl rounded-bl-sm px-3 py-2 flex items-center gap-1">
                   {[0, 1, 2].map((i) => (
                     <span
                       key={i}
@@ -177,14 +171,14 @@ export default function NotionnikChatBot() {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Quick Replies — show only at start */}
+          {/* Quick Replies */}
           {messages.length <= 1 && !isSending && (
-            <div className="flex flex-wrap gap-1.5 px-4 pb-3 shrink-0">
+            <div className="flex flex-wrap gap-1.5 px-3 pb-2 shrink-0">
               {QUICK_REPLIES.map((qr) => (
                 <button
                   key={qr}
                   onClick={() => handleSend(qr)}
-                  className="text-[11.5px] px-3 py-1.5 rounded-full border border-zinc-700 text-zinc-400 hover:border-violet-500 hover:text-violet-300 hover:bg-violet-500/10 transition-all"
+                  className="text-[11px] px-2.5 py-1 rounded-full border border-zinc-700 text-zinc-400 hover:border-violet-500 hover:text-violet-300 hover:bg-violet-500/10 transition-all"
                 >
                   {qr}
                 </button>
@@ -193,11 +187,11 @@ export default function NotionnikChatBot() {
           )}
 
           {/* Input area */}
-          <div className="border-t border-zinc-800 bg-zinc-950 p-3 flex items-center gap-2 shrink-0">
+          <div className="border-t border-zinc-800 bg-zinc-950 p-2 flex items-center gap-2 shrink-0">
             <input
               ref={inputRef}
               type="text"
-              className="flex-1 bg-zinc-800 border border-zinc-700 rounded-xl px-3.5 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
               placeholder="Ask me anything..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -218,13 +212,13 @@ export default function NotionnikChatBot() {
           </div>
 
           {/* Footer */}
-          <div className="text-center text-[10px] text-zinc-600 py-1.5 bg-zinc-950 border-t border-zinc-800 shrink-0">
+          <div className="text-center text-[10px] text-zinc-600 py-1 bg-zinc-950 border-t border-zinc-800 shrink-0">
             Powered by <span className="text-violet-400 font-medium">Notionnik AI</span>
           </div>
         </div>
       )}
 
-      {/* ── Toggle Button ── */}
+      {/* Toggle Button */}
       <button
         onClick={() => setIsOpen((prev) => !prev)}
         aria-label="Toggle chat"

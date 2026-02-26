@@ -2,11 +2,11 @@ import { Link } from "react-router-dom";
 
 export default function Footer() {
     return (
-        <footer className="bg-gradient-to-br from-[#00F0FF] to-[#B0E0E6] border-t border-blue-200 text-black-900 py-5 px-6">
-            <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
+        <footer className="bg-gradient-to-br from-[#00F0FF] to-[#B0E0E6] border-t border-blue-200 text-black py-6 px-4 sm:px-6">
+            <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6 sm:gap-8">
 
-
-                <div className="flex flex-col items-center md:items-start gap-1">
+                {/* Logo + Copyright */}
+                <div className="flex flex-col items-center md:items-start gap-1 text-center md:text-left">
                     <div className="flex items-center gap-2">
                         <img
                             src="/notionnik.svg"
@@ -17,12 +17,13 @@ export default function Footer() {
                             Notionnik
                         </span>
                     </div>
-                    <p className="text-green-800 text-sm mt-2">
+                    <p className="text-green-800 text-sm mt-1">
                         © 2026 Notionnik. All rights reserved.
                     </p>
                 </div>
 
-                <div className="flex flex-wrap justify-center gap-4 text-sm">
+                {/* Navigation Links */}
+                <div className="flex flex-wrap justify-center md:justify-start gap-3 sm:gap-4 text-sm">
                     {[
                         { label: "Dashboard", to: "/" },
                         { label: "About Us", to: "/about" },
@@ -40,13 +41,13 @@ export default function Footer() {
                     ))}
                 </div>
 
-                <div className="flex flex-col items-center gap-3">
+                {/* Social Icons */}
+                <div className="flex flex-col items-center gap-2">
                     <p className="text-blue-800 text-sm font-semibold tracking-wide uppercase">
                         Follow Us
                     </p>
-
-                    <div className="flex gap-4">
-
+                    <div className="flex gap-3 flex-wrap justify-center">
+                        {/* Facebook */}
                         <a
                             href="https://www.facebook.com/notionnik/"
                             target="_blank"
@@ -61,6 +62,7 @@ export default function Footer() {
                             </svg>
                         </a>
 
+                        {/* LinkedIn */}
                         <a
                             href="https://www.linkedin.com/company/103721418/admin/dashboard/LinkedIn"
                             target="_blank"
@@ -75,6 +77,7 @@ export default function Footer() {
                             </svg>
                         </a>
 
+                        {/* Upwork */}
                         <a
                             href="https://www.upwork.com/agencies/1768339692736311296/"
                             target="_blank"
