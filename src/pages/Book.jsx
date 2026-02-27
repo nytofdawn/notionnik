@@ -1,13 +1,28 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 export default function Book() {
+  const calendlyRef = useRef(null);
+
   useEffect(() => {
-    if (!document.getElementById("calendly-widget")) {
+    function initCalendly() {
+      if (window.Calendly && calendlyRef.current) {
+        calendlyRef.current.innerHTML = ""; // IMPORTANT: reset container
+
+        window.Calendly.initInlineWidget({
+          url: "https://calendly.com/jannikm/30min",
+          parentElement: calendlyRef.current,
+        });
+      }
+    }
+
+    if (!window.Calendly) {
       const script = document.createElement("script");
       script.src = "https://assets.calendly.com/assets/external/widget.js";
       script.async = true;
-      script.id = "calendly-widget";
+      script.onload = initCalendly;
       document.body.appendChild(script);
+    } else {
+      initCalendly();
     }
   }, []);
 
@@ -24,11 +39,11 @@ export default function Book() {
         </p>
       </div>
 
-      {/* Glassmorphism Calendly Embed */}
+      {/* Calendly Container */}
       <div className="w-full max-w-md rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 shadow-lg overflow-hidden">
         <div
-          className="calendly-inline-widget w-full h-[400px] sm:h-[480px] md:h-[520px]"
-          data-url="https://calendly.com/jannikm/30min"
+          ref={calendlyRef}
+          className="w-full h-[400px] sm:h-[480px] md:h-[520px]"
         />
       </div>
 
