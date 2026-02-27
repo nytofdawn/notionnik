@@ -33,15 +33,17 @@ export default function Services() {
     ];
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-green-700 to-green-950 py-16 px-6">
+        <div className="min-h-screen bg-gradient-to-br from-[#B0E0E6] via-[#A7D8EB] to-[#9AD0EC] py-16 px-6">
 
             {/* Header */}
             <div className="text-center mb-14">
-                <span className="inline-block bg-white/10 border border-white/20 text-green-200 text-sm font-semibold px-4 py-1 rounded-full mb-4 tracking-wide">
+                <span className="inline-block bg-white/50 border border-blue-200 text-blue-900 text-sm font-semibold px-4 py-1 rounded-full mb-4 tracking-wide">
                     What We Offer
                 </span>
-                <h1 className="text-5xl font-bold text-white mb-4 tracking-tight">Our Services</h1>
-                <p className="text-green-200 text-lg max-w-2xl mx-auto leading-relaxed">
+                <h1 className="text-5xl font-bold text-blue-950 mb-4 tracking-tight">
+                    Our Services
+                </h1>
+                <p className="text-blue-900/80 text-lg max-w-2xl mx-auto leading-relaxed">
                     From Notion workspaces to full automation pipelines — we build systems
                     that save time, reduce errors, and scale with your business.
                 </p>
@@ -52,26 +54,37 @@ export default function Services() {
                 {services.map((service) => (
                     <div
                         key={service.title}
-                        className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-6 hover:bg-white/20 hover:-translate-y-1 transition-all duration-300 shadow-lg flex flex-col gap-3 group"
+                        className="bg-white/60 backdrop-blur-md border border-blue-200 rounded-2xl p-6
+                                   hover:bg-white hover:-translate-y-1 transition-all duration-300
+                                   shadow-lg flex flex-col gap-3 group"
                     >
                         <span className="text-4xl">{service.icon}</span>
-                        <h2 className="text-white font-bold text-xl group-hover:text-green-200 transition-colors">
+                        <h2 className="text-blue-950 font-bold text-xl group-hover:text-blue-700 transition-colors">
                             {service.title}
                         </h2>
-                        <p className="text-green-200/80 text-sm leading-relaxed">{service.desc}</p>
+                        <p className="text-blue-900/80 text-sm leading-relaxed">
+                            {service.desc}
+                        </p>
                     </div>
                 ))}
             </div>
 
             {/* CTA Banner */}
-            <div className="max-w-6xl mx-auto mt-14 bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl">
+            <div className="max-w-6xl mx-auto mt-14 bg-white/60 backdrop-blur-md border border-blue-200 rounded-2xl p-8
+                            flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl">
                 <div>
-                    <h3 className="text-white font-bold text-2xl mb-1">Need a custom automation?</h3>
-                    <p className="text-green-200">Tell us what you need — we'll build it for you.</p>
+                    <h3 className="text-blue-950 font-bold text-2xl mb-1">
+                        Need a custom automation?
+                    </h3>
+                    <p className="text-blue-900/80">
+                        Tell us what you need — we'll build it for you.
+                    </p>
                 </div>
                 <a
                     href="/book"
-                    className="bg-white text-green-800 font-bold px-8 py-3 rounded-xl hover:bg-green-100 transition-all duration-200 hover:-translate-y-1 shadow-lg whitespace-nowrap"
+                    className="bg-blue-600 text-white font-bold px-8 py-3 rounded-xl
+                               hover:bg-blue-700 transition-all duration-200
+                               hover:-translate-y-1 shadow-lg whitespace-nowrap"
                 >
                     📅 Book a Consultation
                 </a>

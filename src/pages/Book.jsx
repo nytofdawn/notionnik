@@ -28,7 +28,7 @@ export default function Book() {
       <div className="w-full max-w-md rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 shadow-lg overflow-hidden">
         <div
           className="calendly-inline-widget w-full h-[400px] sm:h-[480px] md:h-[520px]"
-          data-url="https://calendly.com/jannikm/30min?background_color=96c0f3"
+          data-url="https://calendly.com/jannikm/30min"
         />
       </div>
 
