@@ -7,10 +7,12 @@ import Services from "./pages/Services";
 import CaseStudies from "./pages/CaseStudies";
 import Book from "./pages/Book";
 import ChatBot from "./components/Chatboot";
+import CustomCursor from "./components/customcursor";
 
 function App() {
   return (
     <Router>
+      <CustomCursor />
       <Navbar />
         <Routes>
           <Route path="/" element={<Dashboard/>} />
