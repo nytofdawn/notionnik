@@ -157,8 +157,8 @@ export default function Footer() {
             </span>
           </div>
           <p className="text-amber-800/70 text-sm mt-1">
-            © 2026 Notionnik. All rights reserved.
-          </p>
+            © {new Date().getFullYear()} Notionnik. All rights reserved.
+            </p>
         </div>
 
         {/* Navigation Links */}
