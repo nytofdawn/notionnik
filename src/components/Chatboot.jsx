@@ -59,115 +59,170 @@ function spokeHoles(cx, cy, spokeR, holeSize = 4, count = 5) {
   });
 }
 
-// ─── Mini Bot SVG ─────────────────────────────────────────────────────────────
-function BotSVG({ bodyRot, hovered }) {
-  const bodyGear = gearPath(50, 50, 46, 31, 10, 10);
-  const bodyHoles = spokeHoles(50, 50, 21, 4, 5);
-  const headGear = gearPath(50, 50, 46, 31, 13, 7);
-
-  const fill = hovered ? "url(#hoverGrad)" : "url(#bodyGrad)";
-  const glow = hovered ? "rgba(251,191,36,0.85)" : "rgba(99,102,241,0.75)";
+// ─── Mechanic Character SVG ───────────────────────────────────────────────────
+function MechanicSVG({ walkFrame, hovered, idle }) {
+  const legSwing = idle ? 0 : Math.sin((walkFrame / 4) * Math.PI * 2) * 18;
+  const armSwing = idle ? 0 : Math.sin((walkFrame / 4) * Math.PI * 2 + Math.PI) * 22;
+  const bodyBob = idle ? 0 : Math.abs(Math.sin((walkFrame / 4) * Math.PI * 2)) * 2.5;
+  const eyeX = hovered ? 2 : 0;
+  const wrenchAngle = idle ? Math.sin(Date.now() / 500) * 15 - 10 : -30 + armSwing * 0.5;
 
   return (
     <svg
-      viewBox="0 0 80 110"
-      width="56"
-      height="78"
+      viewBox="0 0 60 100"
+      width="52"
+      height="87"
       xmlns="http://www.w3.org/2000/svg"
-      style={{ display: "block", filter: `drop-shadow(0 0 7px ${glow}) drop-shadow(0 0 18px ${glow})`, transition: "filter 0.25s ease" }}
-      fillRule="evenodd"
+      style={{
+        display: "block",
+        filter: hovered
+          ? "drop-shadow(0 0 8px rgba(251,191,36,0.9)) drop-shadow(0 4px 16px rgba(0,0,0,0.5))"
+          : "drop-shadow(0 0 5px rgba(99,102,241,0.5)) drop-shadow(0 4px 12px rgba(0,0,0,0.4))",
+        transition: "filter 0.25s ease",
+        transform: `translateY(${-bodyBob}px)`,
+      }}
     >
       <defs>
-        <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#6366f1" />
-          <stop offset="50%" stopColor="#ec4899" />
-          <stop offset="100%" stopColor="#f97316" />
+        <linearGradient id="skinGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#FBBF7A" />
+          <stop offset="100%" stopColor="#F59E5A" />
         </linearGradient>
-        <linearGradient id="hoverGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <linearGradient id="suitGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#4338ca" />
+          <stop offset="100%" stopColor="#6d28d9" />
+        </linearGradient>
+        <linearGradient id="helmetGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#1e1b4b" />
+          <stop offset="100%" stopColor="#312e81" />
+        </linearGradient>
+        <linearGradient id="bootGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#374151" />
+          <stop offset="100%" stopColor="#111827" />
+        </linearGradient>
+        <linearGradient id="visorGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#6366f1" stopOpacity="0.9" />
+          <stop offset="100%" stopColor="#ec4899" stopOpacity="0.7" />
+        </linearGradient>
+        <linearGradient id="wrenchGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#9ca3af" />
+          <stop offset="100%" stopColor="#4b5563" />
+        </linearGradient>
+        <linearGradient id="beltGrad" x1="0%" y1="0%" x2="100%" y2="0%">
           <stop offset="0%" stopColor="#fbbf24" />
-          <stop offset="100%" stopColor="#f97316" />
+          <stop offset="100%" stopColor="#f59e0b" />
         </linearGradient>
-        <linearGradient id="legGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <linearGradient id="gearBadge" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#f97316" />
+          <stop offset="100%" stopColor="#ec4899" />
+        </linearGradient>
+        <linearGradient id="legGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="#818cf8" />
           <stop offset="100%" stopColor="#f472b6" />
         </linearGradient>
       </defs>
 
-      {/* Antenna */}
-      <line x1="40" y1="6" x2="40" y2="14" stroke="#818cf8" strokeWidth="2" strokeLinecap="round" />
-      <circle cx="40" cy="4" r="3.5" fill={hovered ? "#fbbf24" : "#a5b4fc"} style={{ transition: "fill 0.2s" }} />
-
-      {/* Head gear */}
-      <g transform="translate(16, 8) scale(0.48)">
-        <path d={headGear} fill={fill} fillRule="evenodd" />
-        {spokeHoles(50, 50, 20, 3.5, 4).map((h, i) => (
-          <path key={i} d={h} fill="rgba(0,0,0,0.35)" />
-        ))}
-        {/* Eyes */}
-        <circle cx="35" cy="50" r="7" fill="white" />
-        <circle cx="65" cy="50" r="7" fill="white" />
-        <circle cx={hovered ? 37 : 35} cy="50" r="4" fill={hovered ? "#fbbf24" : "#6366f1"} style={{ transition: "all 0.2s" }} />
-        <circle cx={hovered ? 67 : 65} cy="50" r="4" fill={hovered ? "#fbbf24" : "#6366f1"} style={{ transition: "all 0.2s" }} />
-        <circle cx="37" cy="48" r="1.5" fill="white" opacity="0.7" />
-        <circle cx="67" cy="48" r="1.5" fill="white" opacity="0.7" />
-        {/* Mouth */}
-        <path
-          d={hovered ? "M 33 64 Q 50 74 67 64" : "M 33 64 Q 50 58 67 64"}
-          fill="none" stroke="white" strokeWidth="3" strokeLinecap="round"
-          style={{ transition: "d 0.3s" }}
-        />
-        <circle cx="50" cy="50" r="8" fill="none" stroke={hovered ? "#fbbf24" : "rgba(165,180,252,0.5)"} strokeWidth="2" style={{ transition: "stroke 0.2s" }} />
-        <circle cx="50" cy="50" r="3.5" fill={hovered ? "#fbbf24" : "#a5b4fc"} style={{ transition: "fill 0.2s" }} />
+      {/* LEFT LEG */}
+      <g transform={`translate(22, 68) rotate(${-legSwing * 0.7}, 5, 0)`}>
+        <rect x="1" y="0" width="9" height="14" rx="3" fill="url(#suitGrad)" />
+        <rect x="1" y="13" width="9" height="11" rx="2" fill="#3730a3" />
+        <rect x="0" y="23" width="11" height="6" rx="2" fill="url(#bootGrad)" />
+        <rect x="-1" y="27" width="13" height="3" rx="1.5" fill="#1f2937" />
       </g>
 
-      {/* Body gear — spins */}
-      <g transform={`translate(8, 42) scale(0.64)`} style={{ transformOrigin: "50px 50px", transformBox: "fill-box" }}>
-        <g style={{ transform: `rotate(${bodyRot}deg)`, transformOrigin: "50% 50%", transition: "none" }}>
-          <path d={bodyGear} fill={fill} fillRule="evenodd" />
-          {bodyHoles.map((h, i) => (
-            <path key={i} d={h} fill="rgba(0,0,0,0.4)" />
-          ))}
-          <circle cx="50" cy="50" r="13" fill="none" stroke={hovered ? "#fbbf24" : "rgba(165,180,252,0.5)"} strokeWidth="2.5" style={{ transition: "stroke 0.2s" }} />
-          <circle cx="50" cy="50" r="5" fill={hovered ? "#fbbf24" : "#a5b4fc"} style={{ transition: "fill 0.2s" }} />
-          <circle cx="50" cy="50" r="2.5" fill="rgba(0,0,0,0.4)" />
+      {/* RIGHT LEG */}
+      <g transform={`translate(34, 68) rotate(${legSwing * 0.7}, 5, 0)`}>
+        <rect x="1" y="0" width="9" height="14" rx="3" fill="url(#suitGrad)" />
+        <rect x="1" y="13" width="9" height="11" rx="2" fill="#3730a3" />
+        <rect x="0" y="23" width="11" height="6" rx="2" fill="url(#bootGrad)" />
+        <rect x="-1" y="27" width="13" height="3" rx="1.5" fill="#1f2937" />
+      </g>
+
+      {/* BODY */}
+      <rect x="14" y="38" width="32" height="32" rx="5" fill="url(#suitGrad)" />
+      <rect x="18" y="42" width="24" height="16" rx="3" fill="#3730a3" opacity="0.6" />
+      <circle cx="30" cy="50" r="6" fill="url(#gearBadge)" opacity="0.9" />
+      <circle cx="30" cy="50" r="3" fill="rgba(0,0,0,0.3)" />
+      <circle cx="30" cy="50" r="1.5" fill="#fbbf24" />
+      <circle cx="21" cy="62" r="1.5" fill="#818cf8" opacity="0.8" />
+      <circle cx="39" cy="62" r="1.5" fill="#818cf8" opacity="0.8" />
+      <rect x="14" y="64" width="32" height="5" rx="1.5" fill="url(#beltGrad)" />
+      <rect x="26" y="64.5" width="8" height="4" rx="1" fill="#1e1b4b" />
+      <rect x="28" y="65.5" width="4" height="2" rx="0.5" fill="#fbbf24" />
+      <rect x="16" y="55" width="8" height="7" rx="1.5" fill="#3730a3" />
+      <line x1="16" y1="58" x2="24" y2="58" stroke="#4338ca" strokeWidth="0.8" />
+
+      {/* LEFT ARM (wrench) */}
+      <g transform={`translate(9, 40) rotate(${armSwing * 0.6 - 10}, 5, 0)`}>
+        <rect x="0" y="0" width="8" height="13" rx="3" fill="url(#suitGrad)" />
+        <rect x="1" y="12" width="7" height="11" rx="2.5" fill="#4338ca" />
+        <ellipse cx="4.5" cy="25" rx="4" ry="3.5" fill="#1e1b4b" />
+        <g transform={`translate(1, 26) rotate(${wrenchAngle}, 3, 0)`}>
+          <rect x="2" y="0" width="3.5" height="14" rx="1.5" fill="url(#wrenchGrad)" />
+          <rect x="-1" y="-4" width="8" height="5" rx="1.5" fill="url(#wrenchGrad)" />
+          <rect x="0" y="-2.5" width="3" height="3" rx="0.5" fill="#374151" />
+          <rect x="0" y="13" width="6" height="4" rx="1.5" fill="url(#wrenchGrad)" />
+          <rect x="2.5" y="1" width="1.2" height="11" rx="0.6" fill="rgba(255,255,255,0.2)" />
         </g>
       </g>
 
-      {/* Left leg gear */}
-      <g transform="translate(4, 82) scale(0.28)">
-        <g style={{ transform: `rotate(${-bodyRot * 1.4}deg)`, transformOrigin: "50% 50%", transition: "none" }}>
-          <path d={gearPath(50, 50, 46, 31, 13, 6)} fill="url(#legGrad)" fillRule="evenodd" />
-          <circle cx="50" cy="50" r="4" fill="#818cf8" />
-        </g>
+      {/* RIGHT ARM */}
+      <g transform={`translate(43, 40) rotate(${-armSwing * 0.6 + 10}, 5, 0)`}>
+        <rect x="0" y="0" width="8" height="13" rx="3" fill="url(#suitGrad)" />
+        <rect x="1" y="12" width="7" height="11" rx="2.5" fill="#4338ca" />
+        <ellipse cx="4.5" cy="25" rx="4" ry="3.5" fill="#1e1b4b" />
       </g>
 
-      {/* Right leg gear */}
-      <g transform="translate(48, 82) scale(0.28)">
-        <g style={{ transform: `rotate(${bodyRot * 1.4}deg)`, transformOrigin: "50% 50%", transition: "none" }}>
-          <path d={gearPath(50, 50, 46, 31, 13, 6)} fill="url(#legGrad)" fillRule="evenodd" />
-          <circle cx="50" cy="50" r="4" fill="#818cf8" />
-        </g>
-      </g>
+      {/* NECK */}
+      <rect x="24" y="33" width="12" height="7" rx="2" fill="url(#skinGrad)" />
+
+      {/* HEAD */}
+      <rect x="14" y="12" width="32" height="28" rx="7" fill="url(#skinGrad)" />
+      <path d="M13 22 Q13 10 30 10 Q47 10 47 22 L47 18 Q47 6 30 6 Q13 6 13 18 Z" fill="url(#helmetGrad)" />
+      <rect x="13" y="18" width="34" height="8" rx="3" fill="url(#helmetGrad)" />
+      <rect x="11" y="24" width="38" height="4" rx="2" fill="#1e1b4b" />
+      <rect x="12" y="25" width="36" height="2" rx="1" fill="#6366f1" opacity="0.6" />
+      <circle cx="30" cy="14" r="3.5" fill={hovered ? "#fbbf24" : "#6366f1"} style={{ transition: "fill 0.2s" }} />
+      <circle cx="30" cy="14" r="2" fill={hovered ? "#fff7ed" : "#a5b4fc"} style={{ transition: "fill 0.2s" }} />
+      <rect x="16" y="27" width="28" height="9" rx="3" fill="url(#visorGrad)" opacity="0.85" />
+      <rect x="17" y="28" width="10" height="2.5" rx="1.5" fill="rgba(255,255,255,0.3)" />
+      <circle cx={27 + eyeX} cy="31.5" r="2.5" fill="white" opacity="0.9" />
+      <circle cx={33 + eyeX} cy="31.5" r="2.5" fill="white" opacity="0.9" />
+      <circle cx={28 + eyeX} cy="31.5" r="1.3" fill={hovered ? "#f97316" : "#6366f1"} style={{ transition: "fill 0.2s" }} />
+      <circle cx={34 + eyeX} cy="31.5" r="1.3" fill={hovered ? "#f97316" : "#6366f1"} style={{ transition: "fill 0.2s" }} />
+      <rect x="10" y="22" width="5" height="8" rx="2" fill="#1e1b4b" />
+      <rect x="45" y="22" width="5" height="8" rx="2" fill="#1e1b4b" />
+      <circle cx="12" cy="26" r="1.5" fill="#6366f1" opacity="0.7" />
+      <circle cx="48" cy="26" r="1.5" fill="#6366f1" opacity="0.7" />
+      <rect x="13" y="39" width="7" height="4" rx="1.5" fill="#fbbf24" opacity="0.9" />
+      <rect x="40" y="39" width="7" height="4" rx="1.5" fill="#fbbf24" opacity="0.9" />
+      <text x="16.5" y="42.5" fontSize="3" fill="#1e1b4b" fontFamily="monospace" fontWeight="bold">AI</text>
+      <text x="43.5" y="42.5" fontSize="3" fill="#1e1b4b" fontFamily="monospace" fontWeight="bold">AI</text>
     </svg>
   );
 }
 
-// ─── Mini Wandering Bot ───────────────────────────────────────────────────────
-const SPEED = 0.9;
-const BOT_W = 56;
-const BOT_H = 78;
+// ─── Mini Wandering Mechanic ──────────────────────────────────────────────────
+const SPEED = 0.85;
 
-function MiniBot({ onOpen, hasUnread }) {
-  const posRef = useRef({ x: 100, y: window.innerHeight - 160 });
-  const targetRef = useRef({ x: 200, y: window.innerHeight - 200 });
-  const pauseRef = useRef(80);
+function MiniMechanic({ onOpen, hasUnread }) {
+  const posRef = useRef({ x: 120, y: window.innerHeight - 160 });
+  const targetRef = useRef({ x: 300, y: window.innerHeight / 2 });
+  const pauseRef = useRef(60);
   const rafRef = useRef(null);
   const domRef = useRef(null);
-  const bodyRotRef = useRef(0);
-  const [bodyRot, setBodyRot] = useState(0);
-  const [hovered, setHovered] = useState(false);
-  const [showBubble, setShowBubble] = useState(true);
+  const walkTickRef = useRef(0);
+  const idleRef = useRef(false);
+
+  const [walkFrame, setWalkFrame] = useState(0);
   const [facingLeft, setFacingLeft] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const [idle, setIdle] = useState(false);
+  const [showBubble, setShowBubble] = useState(true);
+
+  const [bubbleText] = useState(() => {
+    const opts = ["Need help? 🔧", "Let's automate! ⚙️", "Got a task? 🤖", "Workflows = my thing 💡"];
+    return opts[Math.floor(Math.random() * opts.length)];
+  });
 
   useEffect(() => {
     const t = setTimeout(() => setShowBubble(false), 4000);
@@ -175,46 +230,45 @@ function MiniBot({ onOpen, hasUnread }) {
   }, []);
 
   const pickTarget = () => {
-    const margin = 80;
+    const margin = 90;
     targetRef.current = {
       x: margin + Math.random() * (window.innerWidth - margin * 2),
       y: margin + Math.random() * (window.innerHeight - margin * 2),
     };
-    pauseRef.current = 80 + Math.random() * 120;
+    pauseRef.current = 90 + Math.random() * 140;
+    idleRef.current = false;
+    setIdle(false);
   };
 
   useEffect(() => {
     pickTarget();
-
     const animate = () => {
       if (pauseRef.current > 0) {
         pauseRef.current--;
-        // idle: slow spin
-        bodyRotRef.current += 0.3;
+        idleRef.current = true;
+        setIdle(true);
       } else {
+        idleRef.current = false;
+        setIdle(false);
         const dx = targetRef.current.x - posRef.current.x;
         const dy = targetRef.current.y - posRef.current.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
-
-        if (dist < 6) {
+        if (dist < 8) {
           pickTarget();
         } else {
           posRef.current.x += (dx / dist) * SPEED;
           posRef.current.y += (dy / dist) * SPEED;
-          bodyRotRef.current += SPEED * 3;
           setFacingLeft(dx < 0);
+          walkTickRef.current++;
+          if (walkTickRef.current % 10 === 0) setWalkFrame((f) => (f + 1) % 4);
         }
       }
-
       if (domRef.current) {
         domRef.current.style.left = `${posRef.current.x}px`;
         domRef.current.style.top = `${posRef.current.y}px`;
       }
-
-      setBodyRot(Math.round(bodyRotRef.current));
       rafRef.current = requestAnimationFrame(animate);
     };
-
     rafRef.current = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(rafRef.current);
   }, []);
@@ -231,60 +285,43 @@ function MiniBot({ onOpen, hasUnread }) {
         zIndex: 99980,
         cursor: "none",
         userSelect: "none",
-        width: `${BOT_W}px`,
-        height: `${BOT_H}px`,
-        transition: "transform 0.1s",
+        width: "52px",
+        height: "87px",
       }}
     >
-      {/* Unread dot */}
       {hasUnread && (
         <div style={{
           position: "absolute", top: "-4px", right: "-4px",
-          width: "12px", height: "12px",
+          width: "13px", height: "13px",
           background: "#ef4444", borderRadius: "50%",
-          border: "2px solid #18181b",
-          zIndex: 1,
-          animation: "ping 1s cubic-bezier(0,0,0.2,1) infinite",
+          border: "2px solid #18181b", zIndex: 2,
         }} />
       )}
-
-      {/* Speech bubble — always upright even when flipped */}
       {(showBubble || hovered) && (
         <div style={{
-          position: "absolute",
-          top: "-38px",
-          left: "50%",
+          position: "absolute", top: "-40px", left: "50%",
           transform: `translateX(-50%) scaleX(${facingLeft ? -1 : 1})`,
-          background: "linear-gradient(135deg, #6366f1, #ec4899)",
-          color: "white",
-          fontSize: "10px",
-          fontFamily: "monospace",
-          fontWeight: "bold",
-          padding: "5px 10px",
-          borderRadius: "10px",
-          whiteSpace: "nowrap",
-          boxShadow: "0 0 12px rgba(99,102,241,0.7)",
-          pointerEvents: "none",
-          zIndex: 2,
+          background: "linear-gradient(135deg, #4338ca, #ec4899)",
+          color: "white", fontSize: "10px", fontFamily: "monospace",
+          fontWeight: "bold", padding: "5px 11px", borderRadius: "10px",
+          whiteSpace: "nowrap", boxShadow: "0 0 14px rgba(99,102,241,0.7)",
+          pointerEvents: "none", zIndex: 3,
         }}>
-          {hovered ? "Click to chat! 💬" : "Need help? ⚙️"}
+          {hovered ? "Click to chat! 💬" : bubbleText}
           <div style={{
             position: "absolute", bottom: "-5px", left: "50%",
-            transform: "translateX(-50%)",
-            width: 0, height: 0,
-            borderLeft: "5px solid transparent",
-            borderRight: "5px solid transparent",
+            transform: "translateX(-50%)", width: 0, height: 0,
+            borderLeft: "5px solid transparent", borderRight: "5px solid transparent",
             borderTop: "5px solid #ec4899",
           }} />
         </div>
       )}
-
-      <BotSVG bodyRot={bodyRot} hovered={hovered} />
+      <MechanicSVG walkFrame={walkFrame} facingLeft={facingLeft} hovered={hovered} idle={idle} />
     </div>
   );
 }
 
-// ─── Main Chatbot Component ───────────────────────────────────────────────────
+// ─── Chatbot ──────────────────────────────────────────────────────────────────
 export default function NotionnikChatBot() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([INITIAL_MESSAGE]);
@@ -313,163 +350,144 @@ export default function NotionnikChatBot() {
   const handleSend = async (overrideText) => {
     const trimmed = (overrideText ?? input).trim();
     if (!trimmed || isSending) return;
-
     setInput("");
     addMessage({ sender: "user", text: trimmed });
     setIsSending(true);
-
     try {
-      const conversationHistory = [
-        ...messages,
-        { sender: "user", text: trimmed },
-      ].map((m) => ({
+      const conversationHistory = [...messages, { sender: "user", text: trimmed }].map((m) => ({
         role: m.sender === "user" ? "user" : "assistant",
         content: m.text,
       }));
-
       const response = await fetch(WEBHOOK_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: trimmed,
-          conversation: conversationHistory,
-        }),
+        body: JSON.stringify({ message: trimmed, conversation: conversationHistory }),
       });
-
       if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
-
       const botReply = await response.text();
-      addMessage({
-        sender: "bot",
-        text: botReply?.trim() || "I'll have someone from our team follow up shortly!",
-      });
-
+      addMessage({ sender: "bot", text: botReply?.trim() || "I'll have someone from our team follow up shortly!" });
       if (!isOpen) setHasUnread(true);
     } catch (err) {
       console.error("ChatBot error:", err);
-      addMessage({
-        sender: "bot",
-        text: "Oops! Something went wrong. Please try again or book a free call directly.",
-      });
+      addMessage({ sender: "bot", text: "Oops! Something went wrong. Please try again or book a free call directly." });
     } finally {
       setIsSending(false);
     }
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
-  };
-
-  const handleOpen = () => {
-    setIsOpen(true);
-    setHasUnread(false);
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
   };
 
   return (
     <>
-      {/* Wandering Mini Bot */}
-      {!isOpen && <MiniBot onOpen={handleOpen} hasUnread={hasUnread} />}
+      {!isOpen && (
+        <MiniMechanic
+          onOpen={() => { setIsOpen(true); setHasUnread(false); }}
+          hasUnread={hasUnread}
+        />
+      )}
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-5 right-5 z-[99990]">
-          <div className="w-[90vw] sm:w-[350px] md:w-[400px] h-[70vh] sm:h-[500px] md:h-[700px] bg-zinc-900 border border-zinc-700/60 rounded-2xl flex flex-col shadow-2xl overflow-hidden">
+        <div className="fixed bottom-5 right-5 z-[99990] w-80 flex flex-col rounded-2xl overflow-hidden shadow-2xl border border-zinc-700/60"
+          style={{ height: "420px" }}>
 
-            {/* Header */}
-            <div className="bg-zinc-950 border-b border-zinc-800 px-4 py-3 flex items-center justify-between shrink-0">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-base shadow-lg shadow-violet-900/40 shrink-0">
-                  ⚡
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-white leading-tight tracking-tight">Notionnik AI</p>
-                  <p className="text-[11px] text-emerald-400 flex items-center gap-1 mt-0.5">
-                    <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
-                    Online · replies instantly
-                  </p>
-                </div>
+          {/* Header */}
+          <div className="bg-zinc-950 border-b border-zinc-800 px-4 py-2.5 flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-sm shadow-md shadow-violet-900/40 shrink-0">
+                ⚡
               </div>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="w-7 h-7 rounded-lg bg-zinc-800 border border-zinc-700 text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors flex items-center justify-center text-sm"
-              >✕</button>
+              <div>
+                <p className="text-sm font-bold text-white leading-tight">Notionnik AI</p>
+                <p className="text-[10px] text-emerald-400 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse inline-block" />
+                  Online · replies instantly
+                </p>
+              </div>
             </div>
+            <button
+              onClick={() => setIsOpen(false)}
+              className="w-6 h-6 rounded-lg bg-zinc-800 border border-zinc-700 text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors flex items-center justify-center text-xs"
+            >✕</button>
+          </div>
 
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-2 sm:gap-3">
-              {messages.map((msg) => (
-                <div key={msg.id} className={`flex flex-col ${msg.sender === "user" ? "items-end" : "items-start"}`}>
-                  <div className={`max-w-[82%] px-3 py-2 rounded-2xl text-sm leading-relaxed break-words ${
-                    msg.sender === "user"
-                      ? "bg-violet-600 text-white rounded-br-sm"
-                      : "bg-zinc-800 text-zinc-100 border border-zinc-700/60 rounded-bl-sm"
-                  }`}>
-                    {msg.sender === "bot" ? (
-                      <div className="prose prose-invert prose-sm max-w-none prose-p:my-1 prose-strong:text-violet-300 prose-a:text-violet-300">
-                        <ReactMarkdown>{msg.text}</ReactMarkdown>
-                      </div>
-                    ) : msg.text}
-                  </div>
-                  <span className="text-[10px] text-zinc-500 mt-0.5 px-1">{msg.time}</span>
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto bg-zinc-900 px-3 py-2.5 flex flex-col gap-2">
+            {messages.map((msg) => (
+              <div key={msg.id} className={`flex flex-col ${msg.sender === "user" ? "items-end" : "items-start"}`}>
+                <div className={`max-w-[80%] px-3 py-2 rounded-2xl text-xs leading-relaxed break-words ${
+                  msg.sender === "user"
+                    ? "bg-violet-600 text-white rounded-br-sm"
+                    : "bg-zinc-800 text-zinc-100 border border-zinc-700/50 rounded-bl-sm"
+                }`}>
+                  {msg.sender === "bot" ? (
+                    <div className="prose prose-invert prose-xs max-w-none prose-p:my-0.5 prose-strong:text-violet-300 prose-a:text-violet-300">
+                      <ReactMarkdown>{msg.text}</ReactMarkdown>
+                    </div>
+                  ) : msg.text}
                 </div>
-              ))}
+                <span className="text-[9px] text-zinc-600 mt-0.5 px-1">{msg.time}</span>
+              </div>
+            ))}
 
-              {isSending && (
-                <div className="flex items-start">
-                  <div className="bg-zinc-800 border border-zinc-700/60 rounded-2xl rounded-bl-sm px-3 py-2 flex items-center gap-1">
-                    {[0, 1, 2].map((i) => (
-                      <span key={i} className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
-                    ))}
-                  </div>
+            {isSending && (
+              <div className="flex items-start">
+                <div className="bg-zinc-800 border border-zinc-700/50 rounded-2xl rounded-bl-sm px-3 py-2 flex items-center gap-1">
+                  {[0, 1, 2].map((i) => (
+                    <span key={i} className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
+                  ))}
                 </div>
-              )}
-              <div ref={messagesEndRef} />
-            </div>
-
-            {/* Quick Replies */}
-            {messages.length <= 1 && !isSending && (
-              <div className="flex flex-wrap gap-1.5 px-3 pb-2 shrink-0">
-                {QUICK_REPLIES.map((qr) => (
-                  <button key={qr} onClick={() => handleSend(qr)}
-                    className="text-[11px] px-2.5 py-1 rounded-full border border-zinc-700 text-zinc-400 hover:border-violet-500 hover:text-violet-300 hover:bg-violet-500/10 transition-all">
-                    {qr}
-                  </button>
-                ))}
               </div>
             )}
-
-            {/* Input */}
-            <div className="border-t border-zinc-800 bg-zinc-950 p-2 flex items-center gap-2 shrink-0">
-              <input
-                ref={inputRef}
-                type="text"
-                className="flex-1 bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500 transition disabled:opacity-50"
-                placeholder="Ask me anything..."
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                disabled={isSending}
-                maxLength={500}
-              />
-              <button
-                onClick={() => handleSend()}
-                disabled={isSending || !input.trim()}
-                className="w-9 h-9 shrink-0 bg-gradient-to-br from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-violet-900/40 transition-all hover:scale-105 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
-              >
-                <svg className="w-4 h-4 fill-white" viewBox="0 0 24 24">
-                  <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
-                </svg>
-              </button>
-            </div>
-
-            {/* Footer */}
-            <div className="text-center text-[10px] text-zinc-600 py-1 bg-zinc-950 border-t border-zinc-800 shrink-0">
-              Powered by <span className="text-violet-400 font-medium">Notionnik AI</span>
-            </div>
+            <div ref={messagesEndRef} />
           </div>
+
+          {/* Quick Replies */}
+          {messages.length <= 1 && !isSending && (
+            <div className="flex flex-wrap gap-1.5 px-3 py-2 bg-zinc-900 border-t border-zinc-800 shrink-0">
+              {QUICK_REPLIES.map((qr) => (
+                <button
+                  key={qr}
+                  onClick={() => handleSend(qr)}
+                  className="text-[10px] px-2.5 py-1 rounded-full border border-zinc-700 text-zinc-400 hover:border-violet-500 hover:text-violet-300 hover:bg-violet-500/10 transition-all"
+                >
+                  {qr}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Input */}
+          <div className="bg-zinc-950 border-t border-zinc-800 px-2.5 py-2 flex items-center gap-2 shrink-0">
+            <input
+              ref={inputRef}
+              type="text"
+              className="flex-1 bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-1.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500 transition disabled:opacity-50"
+              placeholder="Ask me anything..."
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              disabled={isSending}
+              maxLength={500}
+            />
+            <button
+              onClick={() => handleSend()}
+              disabled={isSending || !input.trim()}
+              className="w-8 h-8 shrink-0 bg-gradient-to-br from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 rounded-xl flex items-center justify-center text-white shadow-md shadow-violet-900/40 transition-all hover:scale-105 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
+            >
+              <svg className="w-3.5 h-3.5 fill-white" viewBox="0 0 24 24">
+                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Footer */}
+          <div className="text-center text-[9px] text-zinc-600 py-1 bg-zinc-950 border-t border-zinc-800 shrink-0">
+            Powered by <span className="text-violet-400 font-medium">Notionnik AI</span>
+          </div>
+
         </div>
       )}
     </>
