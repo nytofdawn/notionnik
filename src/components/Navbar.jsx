@@ -1,25 +1,21 @@
 import { NavLink } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
+import { useTheme } from "../pages/ThemeContext";
 
 // ─── Cloud Canvas Background ──────────────────────────────────────────────────
-function CloudCanvas() {
+function CloudCanvas({ isDark }) {
   const canvasRef = useRef(null);
-  const animRef = useRef(null);
+  const animRef   = useRef(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     let t = 0;
-
-    const resize = () => {
-      canvas.width = canvas.offsetWidth;
-      canvas.height = canvas.offsetHeight;
-    };
+    const resize = () => { canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight; };
     resize();
     window.addEventListener("resize", resize);
 
-    // Cloud puffs — each is a cluster of circles
     const clouds = Array.from({ length: 6 }, (_, i) => ({
       x: (i / 6) * 1.3 - 0.1,
       y: 0.1 + Math.random() * 0.75,
@@ -29,7 +25,7 @@ function CloudCanvas() {
       puffs: Array.from({ length: 5 + Math.floor(Math.random() * 4) }, () => ({
         dx: (Math.random() - 0.5) * 60,
         dy: (Math.random() - 0.5) * 20,
-        r: 18 + Math.random() * 22,
+        r:  18 + Math.random() * 22,
       })),
     }));
 
@@ -37,15 +33,18 @@ function CloudCanvas() {
       ctx.save();
       ctx.globalAlpha = opacity;
       puffs.forEach(({ dx, dy, r }) => {
-        const grad = ctx.createRadialGradient(
-          cx + dx * scale, cy + dy * scale, 0,
-          cx + dx * scale, cy + dy * scale, r * scale
-        );
-        grad.addColorStop(0,   "rgba(255,255,255,0.95)");
-        grad.addColorStop(0.6, "rgba(230,240,255,0.7)");
-        grad.addColorStop(1,   "rgba(200,220,255,0)");
+        const grad = ctx.createRadialGradient(cx + dx*scale, cy + dy*scale, 0, cx + dx*scale, cy + dy*scale, r*scale);
+        if (isDark) {
+          grad.addColorStop(0,   "rgba(80,50,140,0.55)");
+          grad.addColorStop(0.6, "rgba(40,15,80,0.25)");
+          grad.addColorStop(1,   "rgba(20,5,40,0)");
+        } else {
+          grad.addColorStop(0,   "rgba(255,255,255,0.95)");
+          grad.addColorStop(0.6, "rgba(230,240,255,0.7)");
+          grad.addColorStop(1,   "rgba(200,220,255,0)");
+        }
         ctx.beginPath();
-        ctx.arc(cx + dx * scale, cy + dy * scale, r * scale, 0, Math.PI * 2);
+        ctx.arc(cx + dx*scale, cy + dy*scale, r*scale, 0, Math.PI * 2);
         ctx.fillStyle = grad;
         ctx.fill();
       });
@@ -56,38 +55,28 @@ function CloudCanvas() {
       const { width, height } = canvas;
       ctx.clearRect(0, 0, width, height);
 
-      // Sky gradient
-      const sky = ctx.createLinearGradient(0, 0, 0, height);
-      sky.addColorStop(0,   "#1a6fc4");
-      sky.addColorStop(0.5, "#3b9de8");
-      sky.addColorStop(1,   "#7ec8f5");
-      ctx.fillStyle = sky;
-      ctx.fillRect(0, 0, width, height);
-
-      // Subtle sun rays at top-right
-      ctx.save();
-      ctx.globalAlpha = 0.06;
-      for (let i = 0; i < 8; i++) {
-        const angle = -0.3 + i * 0.12;
-        ctx.beginPath();
-        ctx.moveTo(width * 0.85, -10);
-        ctx.lineTo(
-          width * 0.85 + Math.cos(angle) * width * 1.5,
-          -10 + Math.sin(angle) * height * 3
-        );
-        ctx.lineWidth = 30;
-        ctx.strokeStyle = "rgba(255,255,200,1)";
-        ctx.stroke();
+      if (isDark) {
+        const sky = ctx.createLinearGradient(0, 0, 0, height);
+        sky.addColorStop(0, "#0d0510"); sky.addColorStop(1, "#1c0818");
+        ctx.fillStyle = sky; ctx.fillRect(0, 0, width, height);
+      } else {
+        const sky = ctx.createLinearGradient(0, 0, 0, height);
+        sky.addColorStop(0, "#1a6fc4"); sky.addColorStop(0.5, "#3b9de8"); sky.addColorStop(1, "#7ec8f5");
+        ctx.fillStyle = sky; ctx.fillRect(0, 0, width, height);
+        ctx.save(); ctx.globalAlpha = 0.06;
+        for (let i = 0; i < 8; i++) {
+          const angle = -0.3 + i * 0.12;
+          ctx.beginPath(); ctx.moveTo(width * 0.85, -10);
+          ctx.lineTo(width * 0.85 + Math.cos(angle) * width * 1.5, -10 + Math.sin(angle) * height * 3);
+          ctx.lineWidth = 30; ctx.strokeStyle = "rgba(255,255,200,1)"; ctx.stroke();
+        }
+        ctx.restore();
       }
-      ctx.restore();
 
-      // Draw drifting clouds
       clouds.forEach((cloud) => {
         cloud.x += cloud.speed;
         if (cloud.x > 1.2) cloud.x = -0.3;
-        const cx = cloud.x * width;
-        const cy = cloud.y * height;
-        drawCloud(cx, cy, cloud.puffs, cloud.scale, cloud.opacity);
+        drawCloud(cloud.x * width, cloud.y * height, cloud.puffs, cloud.scale, cloud.opacity);
       });
 
       t++;
@@ -95,29 +84,62 @@ function CloudCanvas() {
     };
 
     animRef.current = requestAnimationFrame(draw);
-    return () => {
-      cancelAnimationFrame(animRef.current);
-      window.removeEventListener("resize", resize);
-    };
-  }, []);
+    return () => { cancelAnimationFrame(animRef.current); window.removeEventListener("resize", resize); };
+  }, [isDark]);
 
   return (
-    <canvas
-      ref={canvasRef}
+    <canvas ref={canvasRef} style={{
+      position: "absolute", inset: 0,
+      width: "100%", height: "100%",
+      display: "block", pointerEvents: "none",
+    }} />
+  );
+}
+
+// ─── Theme Toggle ─────────────────────────────────────────────────────────────
+function ThemeToggle() {
+  const { isDark, toggle } = useTheme();
+  return (
+    <button
+      onClick={toggle}
+      title={isDark ? "Switch to Light" : "Switch to Dark"}
       style={{
-        position: "absolute",
-        inset: 0,
-        width: "100%",
-        height: "100%",
-        display: "block",
-        pointerEvents: "none",
+        display: "flex", alignItems: "center", gap: "6px",
+        padding: "6px 12px", borderRadius: "999px",
+        border: "1.5px solid rgba(255,255,255,0.4)",
+        background: "rgba(255,255,255,0.18)",
+        backdropFilter: "blur(12px)",
+        cursor: "pointer", color: "white",
+        fontSize: "12px", fontWeight: "700", fontFamily: "inherit",
+        boxShadow: "0 4px 14px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.3)",
+        transition: "all 0.3s ease", whiteSpace: "nowrap",
+        textShadow: "0 1px 4px rgba(0,0,0,0.4)",
       }}
-    />
+    >
+      <span style={{ fontSize: "14px" }}>{isDark ? "🌙" : "☀️"}</span>
+      {isDark ? "Dark" : "Light"}
+      <span style={{
+        display: "inline-flex", width: "30px", height: "16px",
+        borderRadius: "999px", position: "relative", flexShrink: 0,
+        background: isDark ? "rgba(160,80,255,0.5)" : "rgba(255,255,255,0.55)",
+        border: "1px solid rgba(255,255,255,0.3)",
+        transition: "background 0.3s ease",
+      }}>
+        <span style={{
+          position: "absolute", top: "2px",
+          left: isDark ? "15px" : "2px",
+          width: "10px", height: "10px", borderRadius: "50%",
+          background: "white", transition: "left 0.3s ease",
+          boxShadow: "0 1px 4px rgba(0,0,0,0.3)",
+        }} />
+      </span>
+    </button>
   );
 }
 
 // ─── Navbar ───────────────────────────────────────────────────────────────────
 export default function Navbar() {
+  const { isDark } = useTheme();
   const [open, setOpen] = useState(false);
 
   const links = [
@@ -127,44 +149,43 @@ export default function Navbar() {
   ];
 
   return (
-    <nav className="relative overflow-hidden shadow-xl" style={{ minHeight: "68px" }}>
+    <nav className="relative overflow-hidden shadow-xl" style={{ minHeight: "76px" }}>
+      <CloudCanvas isDark={isDark} />
 
-      {/* Sky + cloud canvas */}
-      <CloudCanvas />
+      {/* ── Main bar: logo LEFT, everything else RIGHT ── */}
+      <div className="relative z-10 w-full px-6 sm:px-8 py-3 flex items-center justify-between">
 
-      {/* Frosted cloud-glass bar */}
-      <div
-        className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-3 flex justify-between items-center"
-      >
-        {/* Logo */}
-        <NavLink to="/" className="flex items-center gap-3">
+        {/* ── LOGO — left side, bigger ── */}
+        <NavLink to="/" className="flex items-center gap-3 shrink-0">
           <img
             src="/notionnik.svg"
             alt="Notionnik Logo"
-            className="h-8 w-auto object-contain drop-shadow-md"
+            style={{ height: "48px", width: "auto", objectFit: "contain" }}
+            className="drop-shadow-lg"
           />
           <span
-            className="font-bold text-xl tracking-wide"
+            className="font-extrabold text-2xl sm:text-3xl tracking-wide text-white"
             style={{
-              color: "white",
-              textShadow: "0 1px 8px rgba(30,100,200,0.5)",
+              textShadow: isDark
+                ? "0 1px 10px rgba(180,60,255,0.7)"
+                : "0 1px 10px rgba(30,100,200,0.6)",
             }}
           >
             Notionnik
           </span>
         </NavLink>
 
-        {/* Desktop Menu */}
+        {/* ── RIGHT SIDE: nav links + Book Now + Toggle (desktop) ── */}
         <div className="hidden md:flex items-center gap-3">
 
-          {/* Nav pill — looks like a cloud shape */}
+          {/* Nav pill */}
           <div
             className="flex items-center gap-1 px-3 py-2 rounded-full"
             style={{
-              background: "rgba(255,255,255,0.35)",
+              background: "rgba(255,255,255,0.2)",
               backdropFilter: "blur(12px)",
-              border: "1.5px solid rgba(255,255,255,0.6)",
-              boxShadow: "0 4px 20px rgba(100,160,255,0.2), inset 0 1px 0 rgba(255,255,255,0.5)",
+              border: "1.5px solid rgba(255,255,255,0.4)",
+              boxShadow: "0 4px 20px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.4)",
             }}
           >
             {links.map((link) => (
@@ -175,11 +196,11 @@ export default function Navbar() {
                   `font-semibold text-sm px-4 py-1.5 rounded-full transition-all duration-200 ${
                     isActive
                       ? "bg-white text-blue-700 shadow-md"
-                      : "text-white hover:bg-white/30 hover:text-white"
+                      : "text-white hover:bg-white/30"
                   }`
                 }
                 style={({ isActive }) => ({
-                  textShadow: isActive ? "none" : "0 1px 4px rgba(20,80,180,0.4)",
+                  textShadow: isActive ? "none" : "0 1px 4px rgba(0,0,0,0.3)",
                 })}
               >
                 {link.label}
@@ -187,7 +208,7 @@ export default function Navbar() {
             ))}
           </div>
 
-          {/* Book Now — bright cloud button */}
+          {/* Book Now */}
           <NavLink
             to="/book"
             className={({ isActive }) =>
@@ -200,42 +221,46 @@ export default function Navbar() {
                 ? undefined
                 : "linear-gradient(135deg, rgba(255,255,255,0.95), rgba(220,240,255,0.9))",
               color: isActive ? undefined : "#1a5faa",
-              boxShadow: "0 4px 14px rgba(100,160,255,0.35), inset 0 1px 0 rgba(255,255,255,0.9)",
+              boxShadow: "0 4px 14px rgba(100,160,255,0.3), inset 0 1px 0 rgba(255,255,255,0.9)",
               border: "1.5px solid rgba(255,255,255,0.8)",
-              textShadow: "none",
             })}
           >
             ☁️ Book Now
           </NavLink>
+
+          {/* Theme toggle */}
+          <ThemeToggle />
         </div>
 
-        {/* Mobile Hamburger */}
-        <button
-          onClick={() => setOpen(!open)}
-          className="md:hidden focus:outline-none"
-          aria-label="Toggle menu"
-          style={{ color: "white", filter: "drop-shadow(0 1px 3px rgba(0,60,180,0.4))" }}
-        >
-          <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            {open ? (
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            ) : (
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-            )}
-          </svg>
-        </button>
+        {/* ── Mobile: toggle + hamburger ── */}
+        <div className="md:hidden flex items-center gap-2">
+          <ThemeToggle />
+          <button
+            onClick={() => setOpen(!open)}
+            className="focus:outline-none text-white"
+            style={{ filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.5))" }}
+            aria-label="Toggle menu"
+          >
+            <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              {open
+                ? <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                : <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+              }
+            </svg>
+          </button>
+        </div>
       </div>
 
-      {/* Mobile Menu */}
+      {/* ── Mobile dropdown ── */}
       {open && (
         <div className="relative z-10 md:hidden px-4 pb-4">
           <div
             className="rounded-2xl p-4 flex flex-col gap-2"
             style={{
-              background: "rgba(255,255,255,0.3)",
+              background: "rgba(255,255,255,0.2)",
               backdropFilter: "blur(16px)",
-              border: "1.5px solid rgba(255,255,255,0.55)",
-              boxShadow: "0 8px 32px rgba(80,140,255,0.2)",
+              border: "1.5px solid rgba(255,255,255,0.4)",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.25)",
             }}
           >
             {links.map((link) => (
@@ -245,19 +270,13 @@ export default function Navbar() {
                 onClick={() => setOpen(false)}
                 className={({ isActive }) =>
                   `px-4 py-2.5 rounded-full font-semibold transition-all duration-200 ${
-                    isActive
-                      ? "bg-white text-blue-700 shadow-md"
-                      : "text-white hover:bg-white/30"
+                    isActive ? "bg-white text-blue-700 shadow-md" : "text-white hover:bg-white/30"
                   }`
                 }
-                style={({ isActive }) => ({
-                  textShadow: isActive ? "none" : "0 1px 4px rgba(20,80,180,0.4)",
-                })}
               >
                 {link.label}
               </NavLink>
             ))}
-
             <NavLink
               to="/book"
               onClick={() => setOpen(false)}
@@ -265,7 +284,6 @@ export default function Navbar() {
               style={{
                 background: "linear-gradient(135deg, rgba(255,255,255,0.95), rgba(220,240,255,0.9))",
                 color: "#1a5faa",
-                boxShadow: "0 4px 14px rgba(100,160,255,0.3)",
                 border: "1.5px solid rgba(255,255,255,0.8)",
               }}
             >
