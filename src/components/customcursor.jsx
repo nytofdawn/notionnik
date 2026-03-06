@@ -202,4 +202,5 @@ const CustomCursor = () => {
   );
 };
 
+
 export default CustomCursor;
