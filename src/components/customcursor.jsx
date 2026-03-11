@@ -28,35 +28,55 @@ function gearPath(cx, cy, outerR, innerR, holeR, teeth = 8) {
   return path + "Z";
 }
 
+function isTouchDevice() {
+  return (
+    "ontouchstart" in window ||
+    navigator.maxTouchPoints > 0 ||
+    window.matchMedia("(pointer: coarse)").matches
+  );
+}
+
 const CustomCursor = () => {
-  const cursorRef = useRef(null);
-  const gearRef = useRef(null);
-  const mouse = useRef({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
-  const rafId = useRef(null);
-  const rotRef = useRef(0);
-  const speedRef = useRef(0);
-  const prevMouse = useRef({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
+  const cursorRef  = useRef(null);
+  const gearRef    = useRef(null);
+  const mouse      = useRef({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
+  const pos        = useRef({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
+  const rafId      = useRef(null);
+  const rotRef     = useRef(0);
+  const speedRef   = useRef(0);
+  const prevMouse  = useRef({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
 
   const [isHovering, setIsHovering] = useState(false);
   const [isClicking, setIsClicking] = useState(false);
+  const [isTouch,    setIsTouch]    = useState(isTouchDevice);
 
+  // Re-check on resize (e.g. DevTools toggling)
   useEffect(() => {
+    const check = () => setIsTouch(isTouchDevice());
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  // Manage body cursor style
+  useEffect(() => {
+    document.body.style.cursor = isTouch ? "" : "none";
+    return () => { document.body.style.cursor = ""; };
+  }, [isTouch]);
+
+  // Mouse tracking + animation — always registered, skipped when touch
+  useEffect(() => {
+    if (isTouch) return; // no-op on touch devices
+
     const handleMouseMove = (e) => {
       const dx = e.clientX - prevMouse.current.x;
       const dy = e.clientY - prevMouse.current.y;
       speedRef.current = Math.sqrt(dx * dx + dy * dy);
       prevMouse.current = { x: e.clientX, y: e.clientY };
       mouse.current = { x: e.clientX, y: e.clientY };
-
-      // Update position directly on mousemove for zero lag
-      if (cursorRef.current) {
-        cursorRef.current.style.left = `${e.clientX}px`;
-        cursorRef.current.style.top = `${e.clientY}px`;
-      }
     };
 
     const handleMouseDown = () => setIsClicking(true);
-    const handleMouseUp = () => setIsClicking(false);
+    const handleMouseUp   = () => setIsClicking(false);
 
     const handleMouseOver = (e) => {
       if (e.target.closest("a, button, [data-cursor-hover], input, textarea, label, select"))
@@ -67,12 +87,19 @@ const CustomCursor = () => {
         setIsHovering(false);
     };
 
-    // RAF only handles gear rotation now — not position
     const animate = () => {
+      // Direct assignment = same speed as OS default cursor
+      pos.current.x = mouse.current.x;
+      pos.current.y = mouse.current.y;
+
       const boost = Math.min(speedRef.current, 30);
       rotRef.current += 3.5 + boost * 0.6;
       speedRef.current *= 0.85;
 
+      if (cursorRef.current) {
+        cursorRef.current.style.left = `${pos.current.x}px`;
+        cursorRef.current.style.top  = `${pos.current.y}px`;
+      }
       if (gearRef.current) {
         gearRef.current.style.transform = `rotate(${rotRef.current}deg)`;
       }
@@ -80,31 +107,34 @@ const CustomCursor = () => {
       rafId.current = requestAnimationFrame(animate);
     };
 
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mousedown", handleMouseDown);
-    document.addEventListener("mouseup", handleMouseUp);
-    document.addEventListener("mouseover", handleMouseOver);
-    document.addEventListener("mouseout", handleMouseOut);
+    document.addEventListener("mousemove",  handleMouseMove);
+    document.addEventListener("mousedown",  handleMouseDown);
+    document.addEventListener("mouseup",    handleMouseUp);
+    document.addEventListener("mouseover",  handleMouseOver);
+    document.addEventListener("mouseout",   handleMouseOut);
     rafId.current = requestAnimationFrame(animate);
 
     return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mousedown", handleMouseDown);
-      document.removeEventListener("mouseup", handleMouseUp);
-      document.removeEventListener("mouseover", handleMouseOver);
-      document.removeEventListener("mouseout", handleMouseOut);
+      document.removeEventListener("mousemove",  handleMouseMove);
+      document.removeEventListener("mousedown",  handleMouseDown);
+      document.removeEventListener("mouseup",    handleMouseUp);
+      document.removeEventListener("mouseover",  handleMouseOver);
+      document.removeEventListener("mouseout",   handleMouseOut);
       cancelAnimationFrame(rafId.current);
     };
-  }, []);
+  }, [isTouch]); // re-run if touch state changes
+
+  // Render nothing on touch devices — AFTER all hooks
+  if (isTouch) return null;
 
   const arrowScale = isClicking ? 0.88 : 1;
-  const gearSize = isHovering ? 13 : 11;
-  const sprocket = gearPath(50, 50, 46, 30, 13, 8);
+  const gearSize   = isHovering ? 13 : 11;
+  const sprocket   = gearPath(50, 50, 46, 30, 13, 8);
 
-  const rustMain   = isHovering ? "#cd5c1a" : "#b94a12";
-  const rustLight  = isHovering ? "#e8752a" : "#d4611e";
-  const rustGlow   = isHovering ? "rgba(205,92,26,0.9)"  : "rgba(185,74,18,0.7)";
-  const arrowFill  = isHovering ? "#fde68a" : "#fbbf24";
+  const rustMain  = isHovering ? "#cd5c1a" : "#b94a12";
+  const rustLight = isHovering ? "#e8752a" : "#d4611e";
+  const rustGlow  = isHovering ? "rgba(205,92,26,0.9)" : "rgba(185,74,18,0.7)";
+  const arrowFill = isHovering ? "#fde68a" : "#fbbf24";
 
   return (
     <div
@@ -169,26 +199,17 @@ const CustomCursor = () => {
             viewBox="0 0 100 100"
             overflow="visible"
           >
-            {/* Outer glow ring */}
             <circle cx="50" cy="50" r="48" fill="none"
               stroke={rustGlow} strokeWidth="3" opacity="0.35" />
-
-            {/* Sprocket body */}
             <path d={sprocket} fill="url(#rustGrad)" fillRule="evenodd" />
-
-            {/* Spoke holes */}
             {[0, 1, 2, 3].map((i) => {
               const a = (Math.PI * 2 * i) / 4;
               const x = 50 + 22 * Math.cos(a);
               const y = 50 + 22 * Math.sin(a);
               return <circle key={i} cx={x} cy={y} r="7" fill="rgba(0,0,0,0.35)" />;
             })}
-
-            {/* Inner ring */}
             <circle cx="50" cy="50" r="12" fill="none"
               stroke="rgba(0,0,0,0.25)" strokeWidth="3" />
-
-            {/* Center bolt — yellow to tie with arrow */}
             <circle cx="50" cy="50" r="6" fill={arrowFill} />
             <circle cx="50" cy="50" r="3" fill="rgba(0,0,0,0.3)" />
           </svg>
@@ -197,6 +218,5 @@ const CustomCursor = () => {
     </div>
   );
 };
-
 
 export default CustomCursor;
