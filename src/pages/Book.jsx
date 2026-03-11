@@ -2,7 +2,6 @@ import { useEffect, useRef } from "react";
 import { useTheme } from "./ThemeContext";
 import PageBackground from "./PageBackground";
 
-
 export default function Book() {
   const { isDark } = useTheme();
   const calendlyRef = useRef(null);
