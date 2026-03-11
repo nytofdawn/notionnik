@@ -2,7 +2,9 @@ import { useTheme } from "./ThemeContext";
 import PageBackground from "./PageBackground";
 import { useState, useEffect } from "react";
 
-const NOTION_PROXY_URL = "/api/notion-services";
+const NOTION_PROXY_URL = typeof __API_URL__ !== "undefined"
+  ? `${__API_URL__}/api/notion-services`
+  : "/api/notion-services";
 
 function parseService(page) {
   const props = page.properties;

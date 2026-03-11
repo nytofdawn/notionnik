@@ -2,14 +2,9 @@ import { useTheme } from "./ThemeContext";
 import PageBackground from "./PageBackground";
 import { useState, useEffect } from "react";
 
-// ─── CONFIG ────────────────────────────────────────────────────────────────
-// Option A: If you have a backend proxy (recommended for production)
-const NOTION_PROXY_URL = "/api/notion-team"; // your Express/Next.js route
-
-// Option B: Direct (only works if you've set up a CORS proxy or are using SSR)
-// const NOTION_DATABASE_ID = "your_database_id_here";
-// const NOTION_TOKEN = import.meta.env.VITE_NOTION_TOKEN;
-// ───────────────────────────────────────────────────────────────────────────
+const NOTION_PROXY_URL = typeof __API_URL__ !== "undefined"
+  ? `${__API_URL__}/api/notion-services`
+  : "/api/notion-services";
 
 const AVATAR_SEEDS = ["Alex", "Jordan", "Morgan", "Taylor", "Sam", "Casey", "Riley", "Drew"];
 const AVATAR_COLORS = ["b6e3f4", "c0aede", "d1f4d1", "ffd5dc", "ffdfbf", "c1e1c5", "d4c5f9", "f4d1b6"];
