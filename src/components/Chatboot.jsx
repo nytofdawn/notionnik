@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 
-const WEBHOOK_URL = "/api/chat";
+const WEBHOOK_URL = typeof __API_URL__ !== "undefined"
+  ? `${__API_URL__}/api/chat`
+  : "/api/chat";
 
 const INITIAL_MESSAGE = {
   id: "init",
