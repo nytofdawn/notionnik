@@ -32,7 +32,6 @@ const CustomCursor = () => {
   const cursorRef = useRef(null);
   const gearRef = useRef(null);
   const mouse = useRef({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
-  const pos = useRef({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
   const rafId = useRef(null);
   const rotRef = useRef(0);
   const speedRef = useRef(0);
@@ -48,6 +47,12 @@ const CustomCursor = () => {
       speedRef.current = Math.sqrt(dx * dx + dy * dy);
       prevMouse.current = { x: e.clientX, y: e.clientY };
       mouse.current = { x: e.clientX, y: e.clientY };
+
+      // Update position directly on mousemove for zero lag
+      if (cursorRef.current) {
+        cursorRef.current.style.left = `${e.clientX}px`;
+        cursorRef.current.style.top = `${e.clientY}px`;
+      }
     };
 
     const handleMouseDown = () => setIsClicking(true);
@@ -62,20 +67,12 @@ const CustomCursor = () => {
         setIsHovering(false);
     };
 
+    // RAF only handles gear rotation now — not position
     const animate = () => {
-      const lerp = (a, b, t) => a + (b - a) * t;
-      pos.current.x = lerp(pos.current.x, mouse.current.x, 0.2);
-      pos.current.y = lerp(pos.current.y, mouse.current.y, 0.2);
-
-      // Fast base spin + boost from mouse speed
       const boost = Math.min(speedRef.current, 30);
       rotRef.current += 3.5 + boost * 0.6;
       speedRef.current *= 0.85;
 
-      if (cursorRef.current) {
-        cursorRef.current.style.left = `${pos.current.x}px`;
-        cursorRef.current.style.top = `${pos.current.y}px`;
-      }
       if (gearRef.current) {
         gearRef.current.style.transform = `rotate(${rotRef.current}deg)`;
       }
@@ -104,9 +101,8 @@ const CustomCursor = () => {
   const gearSize = isHovering ? 13 : 11;
   const sprocket = gearPath(50, 50, 46, 30, 13, 8);
 
-  // Rust palette
-  const rustMain   = isHovering ? "#cd5c1a" : "#b94a12";  // deep rust
-  const rustLight  = isHovering ? "#e8752a" : "#d4611e";  // lighter rust
+  const rustMain   = isHovering ? "#cd5c1a" : "#b94a12";
+  const rustLight  = isHovering ? "#e8752a" : "#d4611e";
   const rustGlow   = isHovering ? "rgba(205,92,26,0.9)"  : "rgba(185,74,18,0.7)";
   const arrowFill  = isHovering ? "#fde68a" : "#fbbf24";
 
