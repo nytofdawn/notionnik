@@ -2,9 +2,8 @@ import { useTheme } from "./ThemeContext";
 import PageBackground from "./PageBackground";
 import { useState, useEffect } from "react";
 
-const NOTION_PROXY_URL = typeof __API_URL__ !== "undefined"
-  ? `${__API_URL__}/api/notion-team`
-  : "/api/notion-team";
+const API_BASE = import.meta.env.VITE_API_URL || "";
+const NOTION_PROXY_URL = `${API_BASE}/api/notion-services`;
 
 const AVATAR_SEEDS = ["Alex", "Jordan", "Morgan", "Taylor", "Sam", "Casey", "Riley", "Drew"];
 const AVATAR_COLORS = ["b6e3f4", "c0aede", "d1f4d1", "ffd5dc", "ffdfbf", "c1e1c5", "d4c5f9", "f4d1b6"];

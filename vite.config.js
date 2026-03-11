@@ -8,8 +8,5 @@ export default defineConfig({
     proxy: {
       "/api": "https://notionnik-backend.onrender.com"
     }
-  },
-  define: {
-    __API_URL__: JSON.stringify("https://notionnik-backend.onrender.com")
   }
 })
