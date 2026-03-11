@@ -3,7 +3,7 @@ import PageBackground from "./PageBackground";
 import { useState, useEffect } from "react";
 
 const API_BASE = import.meta.env.VITE_API_URL || "";
-const NOTION_PROXY_URL = `${API_BASE}/api/notion-services`;
+const NOTION_PROXY_URL = `${API_BASE}/api/notion-team`;
 
 const AVATAR_SEEDS = ["Alex", "Jordan", "Morgan", "Taylor", "Sam", "Casey", "Riley", "Drew"];
 const AVATAR_COLORS = ["b6e3f4", "c0aede", "d1f4d1", "ffd5dc", "ffdfbf", "c1e1c5", "d4c5f9", "f4d1b6"];
