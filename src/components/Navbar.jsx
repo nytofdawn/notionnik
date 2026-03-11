@@ -1,4 +1,3 @@
-import { NavLink } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { useTheme } from "../pages/ThemeContext";
 
@@ -54,7 +53,6 @@ function CloudCanvas({ isDark }) {
     const draw = () => {
       const { width, height } = canvas;
       ctx.clearRect(0, 0, width, height);
-
       if (isDark) {
         const sky = ctx.createLinearGradient(0, 0, 0, height);
         sky.addColorStop(0, "#0d0510"); sky.addColorStop(1, "#1c0818");
@@ -72,13 +70,11 @@ function CloudCanvas({ isDark }) {
         }
         ctx.restore();
       }
-
       clouds.forEach((cloud) => {
         cloud.x += cloud.speed;
         if (cloud.x > 1.2) cloud.x = -0.3;
         drawCloud(cloud.x * width, cloud.y * height, cloud.puffs, cloud.scale, cloud.opacity);
       });
-
       t++;
       animRef.current = requestAnimationFrame(draw);
     };
@@ -140,23 +136,56 @@ function ThemeToggle() {
 // ─── Navbar ───────────────────────────────────────────────────────────────────
 export default function Navbar() {
   const { isDark } = useTheme();
-  const [open, setOpen] = useState(false);
+  const [open,    setOpen]    = useState(false);
+  const [active,  setActive]  = useState("home");
+  const [scrolled, setScrolled] = useState(false);
 
   const links = [
-    { label: "About Us",     to: "/about" },
-    { label: "Services",     to: "/services" },
-    { label: "Case Studies", to: "/case-studies" },
+    { label: "Services",     id: "services"     },
+    { label: "Case Studies", id: "case-studies" },
+    { label: "About Us",     id: "about"        },
   ];
 
+  // ── Scroll spy: highlight active section ──
+  useEffect(() => {
+    const onScroll = () => {
+      setScrolled(window.scrollY > 10);
+      const sections = ["home", "services", "case-studies", "about", "book"];
+      for (let i = sections.length - 1; i >= 0; i--) {
+        const el = document.getElementById(sections[i]);
+        if (el && window.scrollY >= el.offsetTop - 100) {
+          setActive(sections[i]);
+          break;
+        }
+      }
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const scrollTo = (id) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+    setOpen(false);
+  };
+
   return (
-    <nav className="relative overflow-hidden shadow-xl" style={{ minHeight: "76px" }}>
+    <nav
+      className="sticky top-0 z-50 overflow-hidden shadow-xl transition-all duration-300"
+      style={{
+        minHeight: "76px",
+        // subtle extra blur/shadow once user has scrolled
+        boxShadow: scrolled
+          ? "0 4px 32px rgba(0,0,0,0.45)"
+          : "0 4px 20px rgba(0,0,0,0.25)",
+      }}
+    >
       <CloudCanvas isDark={isDark} />
 
-      {/* ── Main bar: logo LEFT, everything else RIGHT ── */}
+      {/* ── Main bar ── */}
       <div className="relative z-10 w-full px-6 sm:px-8 py-3 flex items-center justify-between">
 
-        {/* ── LOGO — left side, bigger ── */}
-        <NavLink to="/" className="flex items-center gap-3 shrink-0">
+        {/* Logo */}
+        <button onClick={() => scrollTo("home")} className="flex items-center gap-3 shrink-0 cursor-pointer bg-transparent border-none p-0">
           <img
             src="/notionnik.svg"
             alt="Notionnik Logo"
@@ -173,9 +202,9 @@ export default function Navbar() {
           >
             Notionnik
           </span>
-        </NavLink>
+        </button>
 
-        {/* ── RIGHT SIDE: nav links + Book Now + Toggle (desktop) ── */}
+        {/* Desktop right side */}
         <div className="hidden md:flex items-center gap-3">
 
           {/* Nav pill */}
@@ -189,50 +218,44 @@ export default function Navbar() {
             }}
           >
             {links.map((link) => (
-              <NavLink
-                key={link.label}
-                to={link.to}
-                className={({ isActive }) =>
-                  `font-semibold text-sm px-4 py-1.5 rounded-full transition-all duration-200 ${
-                    isActive
-                      ? "bg-white text-blue-700 shadow-md"
-                      : "text-white hover:bg-white/30"
-                  }`
-                }
-                style={({ isActive }) => ({
-                  textShadow: isActive ? "none" : "0 1px 4px rgba(0,0,0,0.3)",
-                })}
+              <button
+                key={link.id}
+                onClick={() => scrollTo(link.id)}
+                className={`font-semibold text-sm px-4 py-1.5 rounded-full transition-all duration-200 border-none cursor-pointer ${
+                  active === link.id
+                    ? "bg-white text-blue-700 shadow-md"
+                    : "text-white hover:bg-white/30"
+                }`}
+                style={{
+                  textShadow: active === link.id ? "none" : "0 1px 4px rgba(0,0,0,0.3)",
+                  background: active === link.id ? "white" : undefined,
+                }}
               >
                 {link.label}
-              </NavLink>
+              </button>
             ))}
           </div>
 
           {/* Book Now */}
-          <NavLink
-            to="/book"
-            className={({ isActive }) =>
-              `font-bold px-5 py-2 rounded-full transition-all duration-200 shadow-lg ${
-                isActive ? "bg-sky-100 text-sky-800" : "hover:scale-105"
-              }`
-            }
-            style={({ isActive }) => ({
-              background: isActive
-                ? undefined
+          <button
+            onClick={() => scrollTo("book")}
+            className="font-bold px-5 py-2 rounded-full transition-all duration-200 shadow-lg hover:scale-105 cursor-pointer border-none"
+            style={{
+              background: active === "book"
+                ? "rgba(200,230,255,0.95)"
                 : "linear-gradient(135deg, rgba(255,255,255,0.95), rgba(220,240,255,0.9))",
-              color: isActive ? undefined : "#1a5faa",
+              color: "#1a5faa",
               boxShadow: "0 4px 14px rgba(100,160,255,0.3), inset 0 1px 0 rgba(255,255,255,0.9)",
               border: "1.5px solid rgba(255,255,255,0.8)",
-            })}
+            }}
           >
             ☁️ Book Now
-          </NavLink>
+          </button>
 
-          {/* Theme toggle */}
           <ThemeToggle />
         </div>
 
-        {/* ── Mobile: toggle + hamburger ── */}
+        {/* Mobile: toggle + hamburger */}
         <div className="md:hidden flex items-center gap-2">
           <ThemeToggle />
           <button
@@ -251,7 +274,7 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* ── Mobile dropdown ── */}
+      {/* Mobile dropdown */}
       {open && (
         <div className="relative z-10 md:hidden px-4 pb-4">
           <div
@@ -264,23 +287,19 @@ export default function Navbar() {
             }}
           >
             {links.map((link) => (
-              <NavLink
-                key={link.label}
-                to={link.to}
-                onClick={() => setOpen(false)}
-                className={({ isActive }) =>
-                  `px-4 py-2.5 rounded-full font-semibold transition-all duration-200 ${
-                    isActive ? "bg-white text-blue-700 shadow-md" : "text-white hover:bg-white/30"
-                  }`
-                }
+              <button
+                key={link.id}
+                onClick={() => scrollTo(link.id)}
+                className={`px-4 py-2.5 rounded-full font-semibold transition-all duration-200 text-left border-none cursor-pointer ${
+                  active === link.id ? "bg-white text-blue-700 shadow-md" : "text-white hover:bg-white/30"
+                }`}
               >
                 {link.label}
-              </NavLink>
+              </button>
             ))}
-            <NavLink
-              to="/book"
-              onClick={() => setOpen(false)}
-              className="mt-1 font-bold text-center px-4 py-2.5 rounded-full transition-all hover:scale-105"
+            <button
+              onClick={() => scrollTo("book")}
+              className="mt-1 font-bold text-center px-4 py-2.5 rounded-full transition-all hover:scale-105 border-none cursor-pointer"
               style={{
                 background: "linear-gradient(135deg, rgba(255,255,255,0.95), rgba(220,240,255,0.9))",
                 color: "#1a5faa",
@@ -288,7 +307,7 @@ export default function Navbar() {
               }}
             >
               ☁️ Book Now
-            </NavLink>
+            </button>
           </div>
         </div>
       )}
