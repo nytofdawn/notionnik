@@ -1,490 +1,455 @@
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef } from "react";
 import { useTheme } from "./ThemeContext";
 
-// ─── Water Background (Light Mode) ────────────────────────────────────────────
-function WaterCanvas() {
-  const canvasRef  = useRef(null);
-  const animRef    = useRef(null);
-  const bubblesRef = useRef([]);
-
-  const spawnBubbles = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const w = canvas.width, h = canvas.height;
-    const COLORS = [
-      "#00e5ff", "#00bcd4", "#80deea", "#4dd0e1",
-      "#ffffff", "#b2ebf2", "#e0f7fa", "#aef3ff",
-    ];
-    const count = 18 + Math.floor(Math.random() * 14);
-    for (let i = 0; i < count; i++) {
-      const r = 6 + Math.random() * 28;
-      bubblesRef.current.push({
-        x: w * 0.1 + Math.random() * w * 0.8,
-        y: h + r + Math.random() * 60,
-        r,
-        vx: (Math.random() - 0.5) * 0.8,
-        vy: -(0.9 + Math.random() * 1.8),
-        alpha: 0,
-        maxAlpha: 0.18 + Math.random() * 0.32,
-        life: 0,
-        maxLife: 120 + Math.floor(Math.random() * 120),
-        color: COLORS[Math.floor(Math.random() * COLORS.length)],
-        wobble: Math.random() * Math.PI * 2,
-        wobbleSpeed: 0.025 + Math.random() * 0.04,
-        delay: Math.floor(Math.random() * 40),
-      });
-    }
-  }, []);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    let t = 0;
-
-    const resize = () => {
-      canvas.width  = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    resize();
-    window.addEventListener("resize", resize);
-
-    const waves = [
-      { amp: 0.07, freq: 0.010, speed: 0.016, alpha: 0.22, color: "#0097a7" },
-      { amp: 0.05, freq: 0.016, speed: 0.022, alpha: 0.18, color: "#006064" },
-      { amp: 0.06, freq: 0.008, speed: 0.011, alpha: 0.15, color: "#4dd0e1" },
-      { amp: 0.04, freq: 0.020, speed: 0.030, alpha: 0.12, color: "#00838f" },
-      { amp: 0.03, freq: 0.026, speed: 0.038, alpha: 0.10, color: "#00e5ff" },
-    ];
-
-    const draw = () => {
-      const { width, height } = canvas;
-      ctx.clearRect(0, 0, width, height);
-
-      // Background gradient
-      const bg = ctx.createLinearGradient(0, 0, width, height);
-      bg.addColorStop(0, "#00F0FF");
-      bg.addColorStop(1, "#B0E0E6");
-      ctx.fillStyle = bg;
-      ctx.fillRect(0, 0, width, height);
-
-      // Waves
-      waves.forEach((wave, wi) => {
-        ctx.beginPath();
-        ctx.moveTo(0, height);
-        for (let x = 0; x <= width; x += 3) {
-          const y =
-            height * 0.5 +
-            Math.sin(x * wave.freq + t * wave.speed + wi * 1.3) * height * wave.amp +
-            Math.sin(x * wave.freq * 0.6 + t * wave.speed * 0.8 + wi * 0.7) * height * wave.amp * 0.4;
-          ctx.lineTo(x, y);
-        }
-        ctx.lineTo(width, height);
-        ctx.closePath();
-        const grad = ctx.createLinearGradient(0, 0, 0, height);
-        grad.addColorStop(0,    wave.color + "00");
-        grad.addColorStop(0.35, wave.color + Math.round(wave.alpha * 255).toString(16).padStart(2, "0"));
-        grad.addColorStop(1,    wave.color + "44");
-        ctx.fillStyle = grad;
-        ctx.fill();
-      });
-
-      // Shimmer lines
-      ctx.globalAlpha = 0.055;
-      for (let i = 0; i < 10; i++) {
-        const y = (height / 10) * i + 20 + Math.sin(t * 0.018 + i * 0.9) * 12;
-        const lineGrad = ctx.createLinearGradient(0, 0, width, 0);
-        lineGrad.addColorStop(0,    "transparent");
-        lineGrad.addColorStop(0.25, "#ffffff");
-        lineGrad.addColorStop(0.75, "#00e5ff");
-        lineGrad.addColorStop(1,    "transparent");
-        ctx.strokeStyle = lineGrad;
-        ctx.lineWidth = 1.2;
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        for (let x = 0; x <= width; x += 4) {
-          ctx.lineTo(x, y + Math.sin(x * 0.018 + t * 0.025 + i) * 5);
-        }
-        ctx.stroke();
-      }
-      ctx.globalAlpha = 1;
-
-      // ── Bubbles ──────────────────────────────────────────────────────────────
-      bubblesRef.current = bubblesRef.current.filter((b) => {
-        if (b.delay > 0) { b.delay--; return true; }
-        b.life++;
-        b.wobble += b.wobbleSpeed;
-        b.x += b.vx + Math.sin(b.wobble) * 0.5;
-        b.y += b.vy;
-
-        const p = b.life / b.maxLife;
-        if (p < 0.15)      b.alpha = (p / 0.15) * b.maxAlpha;
-        else if (p < 0.75) b.alpha = b.maxAlpha;
-        else               b.alpha = b.maxAlpha * (1 - (p - 0.75) / 0.25);
-
-        if (b.life >= b.maxLife || b.y + b.r < -20) return false;
-
-        const [rr, gg, bb2] = hexToRgbArr(b.color);
-
-        // Bubble body
-        const grd = ctx.createRadialGradient(
-          b.x - b.r * 0.3, b.y - b.r * 0.3, b.r * 0.05,
-          b.x, b.y, b.r
-        );
-        grd.addColorStop(0,   `rgba(255,255,255,${Math.min(1, b.alpha * 1.8).toFixed(3)})`);
-        grd.addColorStop(0.4, `rgba(${rr},${gg},${bb2},${(b.alpha * 0.6).toFixed(3)})`);
-        grd.addColorStop(1,   `rgba(${rr},${gg},${bb2},${(b.alpha * 0.1).toFixed(3)})`);
-        ctx.beginPath();
-        ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
-        ctx.fillStyle = grd;
-        ctx.fill();
-
-        // Bubble rim
-        ctx.strokeStyle = `rgba(255,255,255,${(b.alpha * 0.7).toFixed(3)})`;
-        ctx.lineWidth = 0.8;
-        ctx.stroke();
-
-        // Highlight glint
-        ctx.beginPath();
-        ctx.arc(b.x - b.r * 0.28, b.y - b.r * 0.3, b.r * 0.22, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255,255,255,${Math.min(1, b.alpha * 1.4).toFixed(3)})`;
-        ctx.fill();
-
-        // Pop burst near end
-        if (p > 0.88) {
-          const popAlpha = (1 - p) / 0.12;
-          for (let s = 0; s < 6; s++) {
-            const angle = (s / 6) * Math.PI * 2 + b.wobble;
-            const dist  = b.r * (1.2 + (1 - popAlpha) * 0.6);
-            ctx.beginPath();
-            ctx.arc(
-              b.x + Math.cos(angle) * dist,
-              b.y + Math.sin(angle) * dist,
-              1.5, 0, Math.PI * 2
-            );
-            ctx.fillStyle = `rgba(255,255,255,${Math.min(1, popAlpha * b.alpha * 2).toFixed(3)})`;
-            ctx.fill();
-          }
-        }
-        return true;
-      });
-
-      t++;
-      animRef.current = requestAnimationFrame(draw);
-    };
-
-    const handleBurst = () => spawnBubbles();
-    window.addEventListener("section-burst", handleBurst);
-    animRef.current = requestAnimationFrame(draw);
-
-    return () => {
-      cancelAnimationFrame(animRef.current);
-      window.removeEventListener("resize", resize);
-      window.removeEventListener("section-burst", handleBurst);
-    };
-  }, [spawnBubbles]);
-
-  return (
-    <canvas ref={canvasRef} style={{
-      position: "fixed", top: 0, left: 0,
-      width: "100vw", height: "100vh",
-      zIndex: -1, pointerEvents: "none",
-    }} />
-  );
+// ─── Lazy Three.js loader ──────────────────────────────────────────────────────
+let THREE = null;
+async function getThree() {
+  if (THREE) return THREE;
+  THREE = await import("https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js");
+  return THREE;
 }
 
-// ─── Space Background (Dark Mode) ─────────────────────────────────────────────
-function SpaceCanvas() {
-  const canvasRef = useRef(null);
-  const animRef   = useRef(null);
-  const burstsRef = useRef([]);
+// ─── Shared sprite textures ────────────────────────────────────────────────────
+function makeCircleTexture(T, size = 64) {
+  const c = document.createElement("canvas");
+  c.width = c.height = size;
+  const ctx = c.getContext("2d");
+  const half = size / 2;
+  const grd = ctx.createRadialGradient(half, half, 0, half, half, half);
+  grd.addColorStop(0,   "rgba(255,255,255,1)");
+  grd.addColorStop(0.3, "rgba(255,255,255,0.8)");
+  grd.addColorStop(0.7, "rgba(255,255,255,0.2)");
+  grd.addColorStop(1,   "rgba(255,255,255,0)");
+  ctx.fillStyle = grd;
+  ctx.fillRect(0, 0, size, size);
+  return new T.CanvasTexture(c);
+}
 
-  const spawnNebulaBurst = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const cx = canvas.width  * (0.2 + Math.random() * 0.6);
-    const cy = canvas.height * (0.15 + Math.random() * 0.55);
+function makeStarTexture(T, size = 64, spikes = 4) {
+  const c = document.createElement("canvas");
+  c.width = c.height = size;
+  const ctx = c.getContext("2d");
+  const cx = size / 2, cy = size / 2;
+  const outer = size / 2 - 1;
+  const inner = outer * 0.18;
+  ctx.clearRect(0, 0, size, size);
+  const grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, outer);
+  grd.addColorStop(0,    "rgba(255,255,255,0.9)");
+  grd.addColorStop(0.25, "rgba(255,255,255,0.5)");
+  grd.addColorStop(0.6,  "rgba(255,255,255,0.1)");
+  grd.addColorStop(1,    "rgba(255,255,255,0)");
+  ctx.fillStyle = grd;
+  ctx.beginPath();
+  ctx.arc(cx, cy, outer, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "rgba(255,255,255,0.95)";
+  ctx.beginPath();
+  for (let i = 0; i < spikes * 2; i++) {
+    const angle = (i * Math.PI) / spikes - Math.PI / 2;
+    const r = i % 2 === 0 ? outer * 0.88 : inner;
+    ctx.lineTo(cx + Math.cos(angle) * r, cy + Math.sin(angle) * r);
+  }
+  ctx.closePath();
+  ctx.fill();
+  return new T.CanvasTexture(c);
+}
 
-    const BURST_COLORS = [
-      [180, 40, 255],
-      [80,  20, 240],
-      [255, 80, 180],
-      [40, 100, 255],
-      [255, 200, 80],
-      [80,  255, 200],
-    ];
-    const base  = BURST_COLORS[Math.floor(Math.random() * BURST_COLORS.length)];
-    const count = 55 + Math.floor(Math.random() * 35);
-
-    const particles = Array.from({ length: count }, (_, i) => {
-      const angle = (i / count) * Math.PI * 2 + Math.random() * 0.5;
-      const speed = 0.8 + Math.random() * 3.5;
-      const big   = Math.random() > 0.72;
-      return {
-        x: cx, y: cy,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed,
-        r:  big ? (2.5 + Math.random() * 4) : (0.5 + Math.random() * 1.8),
-        alpha: 0.7 + Math.random() * 0.3,
-        decay: 0.013 + Math.random() * 0.018,
-        color: base,
-        trail: [],
-        shimmer: Math.random() * Math.PI * 2,
-        shimmerSpeed: 0.08 + Math.random() * 0.12,
-        drag: 0.97 + Math.random() * 0.02,
-      };
-    });
-
-    burstsRef.current.push({ cx, cy, particles, life: 0, maxLife: 90, color: base });
-  }, []);
+// ═══════════════════════════════════════════════════════════════════════════════
+// DARK MODE — 3D Space fly-through
+// ═══════════════════════════════════════════════════════════════════════════════
+function SpaceCanvas3D() {
+  const mountRef = useRef(null);
+  const stateRef = useRef(null);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    let t = 0;
+    let T, renderer, scene, camera, animId;
+    let scrollZ = 0, targetScrollZ = 0;
+    let isAlive = true;
 
-    const resize = () => {
-      canvas.width  = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    resize();
-    window.addEventListener("resize", resize);
+    (async () => {
+      T = await getThree();
+      const mount = mountRef.current;
+      if (!mount || !isAlive) return;
 
-    const makeStars = (count, speed, minR, maxR) =>
-      Array.from({ length: count }, () => ({
-        x: Math.random(), y: Math.random(),
-        r: minR + Math.random() * (maxR - minR),
-        alpha: 0.3 + Math.random() * 0.7,
-        twinkleOffset: Math.random() * Math.PI * 2,
-        twinkleSpeed:  0.008 + Math.random() * 0.025,
-        speed,
-        color: Math.random() > 0.88 ? (Math.random() > 0.5 ? "#a0d8ff" : "#ffcba0") : "#ffffff",
-      }));
+      renderer = new T.WebGLRenderer({ antialias: true, alpha: false });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.domElement.style.cssText =
+        "position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;pointer-events:none;";
+      document.body.appendChild(renderer.domElement);
 
-    const starsNear = makeStars(70,  0.00022,  1.2, 2.4);
-    const starsMid  = makeStars(160, 0.00010,  0.6, 1.3);
-    const starsFar  = makeStars(300, 0.000035, 0.2, 0.7);
+      scene  = new T.Scene();
+      camera = new T.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.set(0, 0, 8);
 
-    const nebulae = [
-      { x: 0.40, y: 0.30, rx: 0.45, ry: 0.28, r: 60,  g: 8,  b: 18, a: 0.22 },
-      { x: 0.60, y: 0.45, rx: 0.35, ry: 0.22, r: 45,  g: 5,  b: 25, a: 0.16 },
-      { x: 0.20, y: 0.20, rx: 0.30, ry: 0.18, r: 30,  g: 3,  b: 40, a: 0.12 },
-      { x: 0.80, y: 0.60, rx: 0.28, ry: 0.20, r: 70,  g: 10, b: 15, a: 0.10 },
-      { x: 0.15, y: 0.70, rx: 0.25, ry: 0.18, r: 20,  g: 5,  b: 35, a: 0.10 },
-      { x: 0.70, y: 0.15, rx: 0.22, ry: 0.15, r: 55,  g: 0,  b: 20, a: 0.09 },
-    ];
+      scene.background = new T.Color(0x0a0108);
+      scene.fog = new T.FogExp2(0x0a0108, 0.018);
 
-    const shooters = Array.from({ length: 3 }, () => ({
-      active: false, cooldown: 200 + Math.floor(Math.random() * 400),
-      x: 0, y: 0, vx: 0, vy: 0, life: 0, maxLife: 0,
-    }));
-    const launch = (s) => {
-      s.active = true;
-      s.x = Math.random() * 0.7; s.y = Math.random() * 0.5;
-      s.vx = 0.0025 + Math.random() * 0.004;
-      s.vy = 0.001  + Math.random() * 0.002;
-      s.life = 0; s.maxLife = 35 + Math.floor(Math.random() * 35);
-    };
+      const circleTex = makeCircleTexture(T, 64);
+      const starTex   = makeStarTexture(T, 64, 4);
 
-    const drawStar = (x, y, r, alpha, color) => {
-      ctx.globalAlpha = alpha;
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      ctx.arc(x, y, r, 0, Math.PI * 2);
-      ctx.fill();
-      if (r > 1.4) {
-        ctx.globalAlpha = alpha * 0.25;
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 0.5;
-        ctx.beginPath();
-        ctx.moveTo(x - r * 3, y); ctx.lineTo(x + r * 3, y);
-        ctx.moveTo(x, y - r * 3); ctx.lineTo(x, y + r * 3);
-        ctx.stroke();
-      }
-    };
-
-    const draw = () => {
-      const { width, height } = canvas;
-      ctx.clearRect(0, 0, width, height);
-
-      // Background
-      const bg = ctx.createRadialGradient(
-        width * 0.48, height * 0.38, 0,
-        width * 0.48, height * 0.38, Math.max(width, height) * 0.72
-      );
-      bg.addColorStop(0,    "#1c080e");
-      bg.addColorStop(0.30, "#110510");
-      bg.addColorStop(0.60, "#080310");
-      bg.addColorStop(1,    "#020108");
-      ctx.globalAlpha = 1;
-      ctx.fillStyle = bg;
-      ctx.fillRect(0, 0, width, height);
-
-      // Nebulae
-      nebulae.forEach((n) => {
-        const nx = (n.x + Math.sin(t * 0.00025 + n.x * 4) * 0.012) * width;
-        const ny = (n.y + Math.cos(t * 0.00018 + n.y * 4) * 0.010) * height;
-        const grad = ctx.createRadialGradient(nx, ny, 0, nx, ny, n.rx * width);
-        grad.addColorStop(0,   `rgba(${n.r},${n.g},${n.b},${n.a})`);
-        grad.addColorStop(0.5, `rgba(${n.r},${n.g},${n.b},${(n.a * 0.4).toFixed(3)})`);
-        grad.addColorStop(1,   `rgba(${n.r},${n.g},${n.b},0)`);
-        ctx.globalAlpha = 1;
-        ctx.fillStyle = grad;
-        ctx.beginPath();
-        ctx.ellipse(nx, ny, n.rx * width, n.ry * height, 0, 0, Math.PI * 2);
-        ctx.fill();
-      });
-
-      // Stars
-      [starsFar, starsMid, starsNear].forEach((layer) =>
-        layer.forEach((s) => {
-          s.x += s.speed; if (s.x > 1) s.x -= 1;
-          const tw = 0.55 + 0.45 * Math.sin(t * s.twinkleSpeed + s.twinkleOffset);
-          drawStar(s.x * width, s.y * height, s.r, s.alpha * tw, s.color);
-        })
-      );
-
-      // Shooting stars
-      ctx.globalAlpha = 1;
-      shooters.forEach((s) => {
-        if (!s.active) {
-          s.cooldown--;
-          if (s.cooldown <= 0) { launch(s); s.cooldown = 280 + Math.floor(Math.random() * 450); }
-        } else {
-          s.life++;
-          const p  = s.life / s.maxLife;
-          const al = p < 0.2 ? p / 0.2 : 1 - (p - 0.2) / 0.8;
-          const sx = s.x * width, sy = s.y * height;
-          const ex = sx + s.vx * s.life * width  * 0.55;
-          const ey = sy + s.vy * s.life * height * 0.55;
-          const tr = ctx.createLinearGradient(sx, sy, ex, ey);
-          tr.addColorStop(0,   "rgba(255,255,255,0)");
-          tr.addColorStop(0.6, `rgba(220,200,255,${(al * 0.35).toFixed(3)})`);
-          tr.addColorStop(1,   `rgba(255,255,255,${al.toFixed(3)})`);
-          ctx.strokeStyle = tr; ctx.lineWidth = 1.5; ctx.globalAlpha = 1;
-          ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(ex, ey); ctx.stroke();
-          if (s.life >= s.maxLife) s.active = false;
+      const starLayers = [
+        { count: 1200, spread: 60, zRange: 30, size: 0.4 },
+        { count: 600,  spread: 40, zRange: 20, size: 0.7 },
+        { count: 200,  spread: 25, zRange: 12, size: 1.1 },
+      ];
+      const starMeshes = starLayers.map(({ count, spread, zRange, size }) => {
+        const pos = new Float32Array(count * 3);
+        for (let i = 0; i < count; i++) {
+          pos[i * 3]     = (Math.random() - 0.5) * spread;
+          pos[i * 3 + 1] = (Math.random() - 0.5) * spread;
+          pos[i * 3 + 2] = (Math.random() - 0.5) * zRange;
         }
-      });
-
-      // ── Nebula Bursts ────────────────────────────────────────────────────────
-      burstsRef.current = burstsRef.current.filter((burst) => {
-        burst.life++;
-        const progress = burst.life / burst.maxLife;
-        if (progress >= 1) return false;
-        const [br, bg2, bb] = burst.color;
-
-        // Shockwave ring
-        const ringR     = progress * Math.min(width, height) * 0.28;
-        const ringAlpha = Math.max(0, 0.5 * (1 - progress * 1.4));
-        if (ringAlpha > 0) {
-          const ringGrad = ctx.createRadialGradient(
-            burst.cx, burst.cy, ringR * 0.82,
-            burst.cx, burst.cy, ringR
-          );
-          ringGrad.addColorStop(0,   `rgba(${br},${bg2},${bb},0)`);
-          ringGrad.addColorStop(0.6, `rgba(${br},${bg2},${bb},${(ringAlpha * 0.6).toFixed(3)})`);
-          ringGrad.addColorStop(1,   `rgba(255,255,255,${(ringAlpha * 0.9).toFixed(3)})`);
-          ctx.globalAlpha = 1;
-          ctx.fillStyle = ringGrad;
-          ctx.beginPath();
-          ctx.arc(burst.cx, burst.cy, ringR, 0, Math.PI * 2);
-          ctx.fill();
-        }
-
-        // Central flash
-        if (progress < 0.2) {
-          const flashA    = (1 - progress / 0.2) * 0.7;
-          const flashSize = Math.max(1, 80 * (1 - progress * 3));
-          const flashGrad = ctx.createRadialGradient(burst.cx, burst.cy, 0, burst.cx, burst.cy, flashSize);
-          flashGrad.addColorStop(0,   `rgba(255,255,255,${flashA.toFixed(3)})`);
-          flashGrad.addColorStop(0.5, `rgba(${br},${bg2},${bb},${(flashA * 0.5).toFixed(3)})`);
-          flashGrad.addColorStop(1,   `rgba(${br},${bg2},${bb},0)`);
-          ctx.fillStyle = flashGrad;
-          ctx.beginPath();
-          ctx.arc(burst.cx, burst.cy, flashSize, 0, Math.PI * 2);
-          ctx.fill();
-        }
-
-        // Particles
-        burst.particles.forEach((p) => {
-          p.shimmer += p.shimmerSpeed;
-          p.vx *= p.drag; p.vy *= p.drag;
-          p.x  += p.vx;  p.y  += p.vy;
-          p.alpha -= p.decay;
-          if (p.alpha <= 0) return;
-
-          const shimmerA = p.alpha * (0.7 + 0.3 * Math.sin(p.shimmer));
-
-          // Trail
-          p.trail.push({ x: p.x, y: p.y });
-          if (p.trail.length > 6) p.trail.shift();
-          if (p.trail.length > 1) {
-            ctx.beginPath();
-            ctx.moveTo(p.trail[0].x, p.trail[0].y);
-            p.trail.forEach((pt) => ctx.lineTo(pt.x, pt.y));
-            ctx.strokeStyle = `rgba(${br},${bg2},${bb},${(shimmerA * 0.35).toFixed(3)})`;
-            ctx.lineWidth = p.r * 0.6;
-            ctx.stroke();
-          }
-
-          // Glow
-          const pgrd = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * 3);
-          pgrd.addColorStop(0,   `rgba(255,255,255,${shimmerA.toFixed(3)})`);
-          pgrd.addColorStop(0.4, `rgba(${br},${bg2},${bb},${(shimmerA * 0.6).toFixed(3)})`);
-          pgrd.addColorStop(1,   `rgba(${br},${bg2},${bb},0)`);
-          ctx.fillStyle = pgrd;
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, p.r * 3, 0, Math.PI * 2);
-          ctx.fill();
-
-          // Core
-          ctx.fillStyle = `rgba(255,255,255,${shimmerA.toFixed(3)})`;
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-          ctx.fill();
+        const geo = new T.BufferGeometry();
+        geo.setAttribute("position", new T.BufferAttribute(pos, 3));
+        const mat = new T.PointsMaterial({
+          color: 0xffffff, map: circleTex, size, sizeAttenuation: true,
+          transparent: true, opacity: 0.85, depthWrite: false,
+          alphaTest: 0.01, blending: T.AdditiveBlending,
         });
-
-        return true;
+        const pts = new T.Points(geo, mat);
+        scene.add(pts);
+        return pts;
       });
 
-      ctx.globalAlpha = 1;
-      t++;
-      animRef.current = requestAnimationFrame(draw);
-    };
+      const nebulaBlobs = [
+        { pos: [-4,  2,  -8], col: 0x3c0860, scale: 8  },
+        { pos: [ 5, -1, -12], col: 0x1a0550, scale: 10 },
+        { pos: [-2, -3,  -6], col: 0x280840, scale: 6  },
+        { pos: [ 3,  4, -10], col: 0x460a20, scale: 7  },
+      ];
+      nebulaBlobs.forEach(({ pos, col, scale }) => {
+        const geo = new T.SphereGeometry(scale, 8, 8);
+        const mat = new T.MeshBasicMaterial({
+          color: col, transparent: true, opacity: 0.18,
+          depthWrite: false, side: T.BackSide, blending: T.AdditiveBlending,
+        });
+        const mesh = new T.Mesh(geo, mat);
+        mesh.position.set(...pos);
+        scene.add(mesh);
+      });
 
-    const handleBurst = () => spawnNebulaBurst();
-    window.addEventListener("section-burst", handleBurst);
-    animRef.current = requestAnimationFrame(draw);
+      stateRef.current = { cleanup: null };
+
+      const onResize = () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      };
+      window.addEventListener("resize", onResize);
+
+      const onScroll = () => {
+        const pct = window.scrollY / (document.body.scrollHeight - window.innerHeight || 1);
+        targetScrollZ = -pct * 14;
+      };
+      window.addEventListener("scroll", onScroll, { passive: true });
+
+      let t = 0;
+      const animate = () => {
+        if (!isAlive) return;
+        animId = requestAnimationFrame(animate);
+        t++;
+        scrollZ += (targetScrollZ - scrollZ) * 0.045;
+        camera.position.z = 8 + scrollZ;
+        camera.position.x = Math.sin(t * 0.0004) * 0.6;
+        camera.position.y = Math.cos(t * 0.0003) * 0.4;
+        camera.lookAt(0, 0, 0);
+        starMeshes[0].rotation.y = t * 0.00008;
+        starMeshes[0].rotation.x = t * 0.00004;
+        starMeshes[1].rotation.y = t * 0.00015;
+        starMeshes[1].rotation.z = t * 0.00006;
+        starMeshes[2].rotation.y = t * 0.00025;
+        renderer.render(scene, camera);
+      };
+      animate();
+
+      stateRef.current.cleanup = () => {
+        window.removeEventListener("resize", onResize);
+        window.removeEventListener("scroll", onScroll);
+        cancelAnimationFrame(animId);
+        circleTex.dispose();
+        starTex.dispose();
+        renderer.dispose();
+        if (document.body.contains(renderer.domElement))
+          document.body.removeChild(renderer.domElement);
+      };
+    })();
 
     return () => {
-      cancelAnimationFrame(animRef.current);
-      window.removeEventListener("resize", resize);
-      window.removeEventListener("section-burst", handleBurst);
+      isAlive = false;
+      stateRef.current?.cleanup?.();
     };
-  }, [spawnNebulaBurst]);
+  }, []);
 
-  return (
-    <canvas ref={canvasRef} style={{
-      position: "fixed", top: 0, left: 0,
-      width: "100vw", height: "100vh",
-      zIndex: -1, pointerEvents: "none",
-    }} />
-  );
+  return <div ref={mountRef} />;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// LIGHT MODE — Underwater diver POV 3D fly-through
+//
+// Architecture is a 1-to-1 mirror of SpaceCanvas3D:
+//   starLayers      → waterLayers   (plankton / sediment / bubbles)
+//   nebulaBlobs     → deepBlobs     (large teal/indigo volumetric spheres)
+//   starMeshes.rotation → particleMeshes.rotation  (parallax at 3 speeds)
+//   camera drift    → diver drift   (same sine pattern + breath layer)
+//   scroll dolly    → identical
+//
+// Extra layer unique to water: god-ray group that slowly rotates as one unit,
+// giving the sense of filtered surface light swinging overhead.
+// ═══════════════════════════════════════════════════════════════════════════════
+function UnderwaterCanvas3D() {
+  const stateRef = useRef(null);
+
+  useEffect(() => {
+    let T, renderer, scene, camera, animId;
+    let scrollZ = 0, targetScrollZ = 0;
+    let isAlive = true;
+
+    (async () => {
+      T = await getThree();
+      if (!isAlive) return;
+
+      // ── Renderer — identical setup to dark mode ────────────────────────
+      renderer = new T.WebGLRenderer({ antialias: true, alpha: false });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.domElement.style.cssText =
+        "position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;pointer-events:none;";
+      document.body.appendChild(renderer.domElement);
+
+      // ── Scene & camera — mirrors dark mode ─────────────────────────────
+      scene  = new T.Scene();
+      camera = new T.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 300);
+      camera.position.set(0, 0, 8);
+
+      // Deep ocean: very dark teal (analogous to dark mode's near-black)
+      scene.background = new T.Color(0x011a26);
+      // Water fog: absorbs light with depth (analogous to space fog)
+      scene.fog = new T.FogExp2(0x011520, 0.020);
+
+      // ── Textures ───────────────────────────────────────────────────────
+      const circleTex = makeCircleTexture(T, 64);
+
+      // Hollow-ring bubble sprite
+      const makeBubbleTex = () => {
+        const c = document.createElement("canvas");
+        c.width = c.height = 64;
+        const ctx = c.getContext("2d");
+        const half = 32;
+        const grd = ctx.createRadialGradient(half, half, half * 0.5, half, half, half);
+        grd.addColorStop(0,    "rgba(255,255,255,0)");
+        grd.addColorStop(0.55, "rgba(180,240,255,0.4)");
+        grd.addColorStop(0.82, "rgba(255,255,255,0.9)");
+        grd.addColorStop(1,    "rgba(255,255,255,0)");
+        ctx.fillStyle = grd;
+        ctx.fillRect(0, 0, 64, 64);
+        return new T.CanvasTexture(c);
+      };
+      const bubbleTex = makeBubbleTex();
+
+      // God-ray beam texture (vertical gradient strip)
+      const makeRayTex = () => {
+        const c = document.createElement("canvas");
+        c.width = 32; c.height = 256;
+        const ctx = c.getContext("2d");
+        const g = ctx.createLinearGradient(0, 0, 0, 256);
+        g.addColorStop(0,    "rgba(140,250,255,0.75)");
+        g.addColorStop(0.25, "rgba(80,220,240,0.38)");
+        g.addColorStop(0.65, "rgba(30,180,210,0.10)");
+        g.addColorStop(1,    "rgba(0,150,190,0)");
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, 32, 256);
+        return new T.CanvasTexture(c);
+      };
+      const rayTex = makeRayTex();
+
+      // ── WATER PARTICLE LAYERS (= star layers in dark mode) ─────────────
+      // 3 layers at different depths/speeds — creates the same parallax feel
+      const waterLayerDefs = [
+        // Layer 0: Far plankton — many, wide spread, tiny, slow (= distant stars)
+        { count: 1200, spread: 65, yRange: 40, zRange: 70,
+          size: 0.22, color: 0x38d8d0, opacity: 0.60, tex: circleTex,
+          rotY:  0.000080, rotX:  0.000040 },
+        // Layer 1: Mid sediment — medium, medium spread (= mid stars)
+        { count: 600,  spread: 44, yRange: 28, zRange: 48,
+          size: 0.42, color: 0x70f0e8, opacity: 0.50, tex: circleTex,
+          rotY:  0.000150, rotZ:  0.000060 },
+        // Layer 2: Close bubbles — few, narrow, large, fast (= bright foreground stars)
+        { count: 200,  spread: 22, yRange: 16, zRange: 24,
+          size: 0.85, color: 0xe0fcff, opacity: 0.70, tex: bubbleTex,
+          rotY:  0.000250, rotX: -0.000000 },
+      ];
+
+      const particleMeshes = waterLayerDefs.map(def => {
+        const pos = new Float32Array(def.count * 3);
+        for (let i = 0; i < def.count; i++) {
+          pos[i * 3]     = (Math.random() - 0.5) * def.spread;
+          pos[i * 3 + 1] = (Math.random() - 0.5) * def.yRange;
+          pos[i * 3 + 2] = (Math.random() - 0.5) * def.zRange;
+        }
+        const geo = new T.BufferGeometry();
+        geo.setAttribute("position", new T.BufferAttribute(pos, 3));
+        const mat = new T.PointsMaterial({
+          color: def.color,
+          map: def.tex,
+          size: def.size,
+          sizeAttenuation: true,
+          transparent: true,
+          opacity: def.opacity,
+          depthWrite: false,
+          alphaTest: 0.01,
+          blending: T.AdditiveBlending,
+        });
+        const pts = new T.Points(geo, mat);
+        scene.add(pts);
+        return { pts, def };
+      });
+
+      // ── DEEP WATER BLOBS (= nebula blobs in dark mode) ─────────────────
+      // Large translucent back-side spheres that colour the deep water,
+      // exactly like the purple/indigo nebulae colour deep space.
+      const deepBlobs = [
+        { pos: [ -7,  3, -28], col: 0x004466, scale: 16 },
+        { pos: [  9, -3, -48], col: 0x003355, scale: 22 },
+        { pos: [ -4, -6, -18], col: 0x005060, scale: 12 },
+        { pos: [  6,  5, -38], col: 0x002244, scale: 18 },
+      ];
+      deepBlobs.forEach(({ pos, col, scale }) => {
+        const geo = new T.SphereGeometry(scale, 8, 8);
+        const mat = new T.MeshBasicMaterial({
+          color: col,
+          transparent: true,
+          opacity: 0.20,
+          depthWrite: false,
+          side: T.BackSide,
+          blending: T.AdditiveBlending,
+        });
+        const mesh = new T.Mesh(geo, mat);
+        mesh.position.set(...pos);
+        scene.add(mesh);
+      });
+
+      // ── GOD-RAY GROUP (rotates as a single unit — extra water layer) ───
+      // 12 additive planes fanned above camera in a circle.
+      // The whole group rotates slowly, making rays sweep like surface light.
+      const rayGroup = new T.Group();
+      rayGroup.position.set(0, 0, -8);
+      scene.add(rayGroup);
+
+      const rayMeshes = [];
+      const RAY_N = 12;
+      for (let i = 0; i < RAY_N; i++) {
+        const w = 0.6 + Math.random() * 1.8;
+        const h = 30 + Math.random() * 20;
+        const geo = new T.PlaneGeometry(w, h);
+        const mat = new T.MeshBasicMaterial({
+          map: rayTex,
+          transparent: true,
+          opacity: 0.10 + Math.random() * 0.16,
+          depthWrite: false,
+          side: T.DoubleSide,
+          blending: T.AdditiveBlending,
+        });
+        const mesh = new T.Mesh(geo, mat);
+        const angle  = (i / RAY_N) * Math.PI * 2;
+        const radius = 3 + Math.random() * 6;
+        mesh.position.set(
+          Math.cos(angle) * radius,
+          14 - h / 2,
+          Math.sin(angle) * radius
+        );
+        mesh.rotation.x = -0.1 + (Math.random() - 0.5) * 0.18;
+        mesh.rotation.y = angle;
+        mesh.userData.baseOp    = mat.opacity;
+        mesh.userData.pulsePhase = Math.random() * Math.PI * 2;
+        rayGroup.add(mesh);
+        rayMeshes.push(mesh);
+      }
+
+      // ── Resize ─────────────────────────────────────────────────────────
+      const onResize = () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      };
+      window.addEventListener("resize", onResize);
+
+      // ── Scroll dolly — identical to dark mode ──────────────────────────
+      const onScroll = () => {
+        const pct = window.scrollY / (document.body.scrollHeight - window.innerHeight || 1);
+        targetScrollZ = -pct * 14;
+      };
+      window.addEventListener("scroll", onScroll, { passive: true });
+
+      // ── Animate — mirrors dark mode loop exactly ───────────────────────
+      let t = 0;
+      const animate = () => {
+        if (!isAlive) return;
+        animId = requestAnimationFrame(animate);
+        t++;
+
+        // Camera dolly — identical to dark mode
+        scrollZ += (targetScrollZ - scrollZ) * 0.045;
+        camera.position.z = 8 + scrollZ;
+
+        // Diver drift — same sine pattern as dark mode camera drift
+        // + extra high-freq component simulates breathing
+        camera.position.x = Math.sin(t * 0.0004) * 0.6;
+        camera.position.y = Math.cos(t * 0.0003) * 0.4
+                          + Math.sin(t * 0.0009) * 0.10;
+        camera.lookAt(0, 0, 0);
+
+        // Particle layer rotations — same speed ratios as dark mode stars
+        // Layer 0 (far plankton) — slowest, like distant stars
+        particleMeshes[0].pts.rotation.y = t * 0.000080;
+        particleMeshes[0].pts.rotation.x = t * 0.000040;
+        // Layer 1 (mid sediment) — medium
+        particleMeshes[1].pts.rotation.y = t * 0.000150;
+        particleMeshes[1].pts.rotation.z = t * 0.000060;
+        // Layer 2 (close bubbles) — fastest, most parallax
+        particleMeshes[2].pts.rotation.y = t * 0.000250;
+
+        // God-ray group rotates slowly (analogous to nebula blob positions shifting)
+        rayGroup.rotation.y = t * 0.000038;
+        rayGroup.rotation.z = t * 0.000016;
+
+        // Ray pulse — each beam brightens and dims
+        rayMeshes.forEach(mesh => {
+          mesh.material.opacity =
+            mesh.userData.baseOp *
+            (0.65 + 0.35 * Math.sin(t * 0.020 + mesh.userData.pulsePhase));
+        });
+
+        renderer.render(scene, camera);
+      };
+      animate();
+
+      stateRef.current = {
+        cleanup: () => {
+          window.removeEventListener("resize", onResize);
+          window.removeEventListener("scroll", onScroll);
+          cancelAnimationFrame(animId);
+          circleTex.dispose();
+          bubbleTex.dispose();
+          rayTex.dispose();
+          renderer.dispose();
+          if (document.body.contains(renderer.domElement))
+            document.body.removeChild(renderer.domElement);
+        },
+      };
+    })();
+
+    return () => {
+      isAlive = false;
+      stateRef.current?.cleanup?.();
+    };
+  }, []);
+
+  return null;
 }
 
 // ─── PageBackground ────────────────────────────────────────────────────────────
 export default function PageBackground() {
   const { isDark } = useTheme();
-  return isDark ? <SpaceCanvas /> : <WaterCanvas />;
-}
-
-// ─── Helpers ───────────────────────────────────────────────────────────────────
-function hexToRgbArr(hex) {
-  return [
-    parseInt(hex.slice(1, 3), 16),
-    parseInt(hex.slice(3, 5), 16),
-    parseInt(hex.slice(5, 7), 16),
-  ];
+  return isDark ? <SpaceCanvas3D /> : <UnderwaterCanvas3D />;
 }

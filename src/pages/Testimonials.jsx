@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useTheme } from "./ThemeContext";
 
-// ✏️ 18 testimonials — edit freely
 const TESTIMONIALS = [
   { name: "Sarah Johnson",    company: "Bloom & Co.",           feedback: "Notionnik completely transformed how we manage our projects. The automation they built saves us at least 10 hours every week. Absolutely worth it.",         rating: 5, avatar: "SJ" },
   { name: "Marcus Reyes",     company: "Reyes Digital Agency",   feedback: "We went from chaos to clarity in two weeks. Our Notion workspace is now something the whole team actually enjoys using.",                                     rating: 5, avatar: "MR" },
@@ -26,21 +25,42 @@ const TESTIMONIALS = [
 const PER_PAGE = 6;
 
 const AVATAR_COLORS = [
-  ["#6366f1", "#818cf8"],
-  ["#ec4899", "#f472b6"],
-  ["#14b8a6", "#2dd4bf"],
-  ["#f59e0b", "#fbbf24"],
-  ["#8b5cf6", "#a78bfa"],
-  ["#10b981", "#34d399"],
+  ["#6366f1","#818cf8"],
+  ["#ec4899","#f472b6"],
+  ["#14b8a6","#2dd4bf"],
+  ["#f59e0b","#fbbf24"],
+  ["#8b5cf6","#a78bfa"],
+  ["#10b981","#34d399"],
 ];
+
+// ── Color tokens — both modes sit over a DARK 3D background ──────────────────
+const C = {
+  label:       (d) => d ? "rgba(210,150,255,1)"   : "rgba(100,240,255,1)",
+  heading:     (d) => d ? "#ffffff"               : "#e8fffe",
+  accent:      (d) => d ? "#c084fc"               : "#22d3ee",
+  body:        (d) => d ? "rgba(200,200,220,1)"   : "rgba(170,235,245,1)",
+  muted:       (d) => d ? "rgba(150,150,180,1)"   : "rgba(120,200,220,1)",
+  cardBg:      (d) => d ? "rgba(255,255,255,0.05)": "rgba(0,60,80,0.35)",
+  cardBorder:  (d) => d ? "rgba(255,255,255,0.09)": "rgba(0,200,230,0.20)",
+  cardHoverBg: (d) => d ? "rgba(255,255,255,0.10)": "rgba(0,80,110,0.50)",
+  divider:     (d) => d ? "rgba(255,255,255,0.08)": "rgba(0,200,230,0.15)",
+  quoteMark:   (d) => d ? "rgba(255,255,255,0.08)": "rgba(0,200,230,0.18)",
+  dotActive:   (d) => d ? "#a855f7"               : "#22d3ee",
+  dotInactive: (d) => d ? "rgba(255,255,255,0.20)": "rgba(0,210,240,0.25)",
+  accentGlow:  (d) => d ? "0 0 28px rgba(192,132,252,0.55)" : "0 0 28px rgba(34,211,238,0.50)",
+  textShadow:  (d) => d ? "0 2px 20px rgba(0,0,0,0.8)"     : "0 2px 20px rgba(0,15,30,0.9)",
+  starEmpty:   (d) => d ? "rgba(255,255,255,0.15)"          : "rgba(0,200,230,0.25)",
+  arrowBtn:    (d) => d
+    ? { bg:"rgba(255,255,255,0.10)", border:"rgba(255,255,255,0.18)", text:"#fff",    hoverBg:"rgba(255,255,255,0.18)", disabledText:"rgba(255,255,255,0.18)" }
+    : { bg:"rgba(0,60,80,0.40)",     border:"rgba(0,210,240,0.35)",   text:"#b0f0ff", hoverBg:"rgba(0,90,120,0.55)",   disabledText:"rgba(0,200,230,0.18)"   },
+};
 
 function StarRating({ rating, isDark }) {
   return (
-    <div className="flex gap-0.5">
-      {[1, 2, 3, 4, 5].map((star) => (
-        <svg key={star} className="w-4 h-4"
-          fill={star <= rating ? "#fbbf24" : isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.12)"}
-          viewBox="0 0 24 24">
+    <div style={{ display:"flex", gap:"0.2rem" }}>
+      {[1,2,3,4,5].map((star) => (
+        <svg key={star} width="16" height="16" viewBox="0 0 24 24"
+          fill={star <= rating ? "#fbbf24" : C.starEmpty(isDark)}>
           <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
         </svg>
       ))}
@@ -51,9 +71,107 @@ function StarRating({ rating, isDark }) {
 function AvatarInitials({ initials, index }) {
   const [from, to] = AVATAR_COLORS[index % AVATAR_COLORS.length];
   return (
-    <div className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-md"
-      style={{ background: `linear-gradient(135deg, ${from}, ${to})` }}>
+    <div style={{
+      width:44, height:44, borderRadius:"50%",
+      display:"flex", alignItems:"center", justifyContent:"center",
+      background: `linear-gradient(135deg, ${from}, ${to})`,
+      color:"#fff", fontWeight:700, fontSize:"0.85rem",
+      flexShrink:0,
+      boxShadow:`0 2px 12px ${from}66`,
+    }}>
       {initials}
+    </div>
+  );
+}
+
+function GlassCard({ isDark, children, style = {} }) {
+  const [hov, setHov] = useState(false);
+  return (
+    <div
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      style={{
+        position:"relative",
+        background: hov ? C.cardHoverBg(isDark) : C.cardBg(isDark),
+        border: `1px solid ${C.cardBorder(isDark)}`,
+        borderRadius:"1rem",
+        backdropFilter:"blur(14px)",
+        WebkitBackdropFilter:"blur(14px)",
+        boxShadow: hov
+          ? (isDark ? "0 8px 40px rgba(0,0,0,0.5)" : "0 8px 40px rgba(0,30,50,0.45)")
+          : (isDark ? "0 4px 20px rgba(0,0,0,0.3)" : "0 4px 20px rgba(0,20,40,0.30)"),
+        transform: hov ? "translateY(-4px)" : "translateY(0)",
+        transition:"all 0.3s ease",
+        ...style,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function Pagination({ page, totalPages, setPage, isDark }) {
+  const [hovL, setHovL] = useState(false);
+  const [hovR, setHovR] = useState(false);
+  const arr = C.arrowBtn(isDark);
+
+  return (
+    <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:"0.65rem", marginTop:"2.5rem" }}>
+      <div style={{ display:"flex", alignItems:"center", gap:"1rem" }}>
+
+        <button
+          onClick={() => setPage(p => Math.max(0, p - 1))}
+          disabled={page === 0}
+          onMouseEnter={() => setHovL(true)}
+          onMouseLeave={() => setHovL(false)}
+          style={{
+            width:40, height:40, borderRadius:"50%",
+            display:"flex", alignItems:"center", justifyContent:"center",
+            background: page===0 ? "rgba(255,255,255,0.03)" : (hovL ? arr.hoverBg : arr.bg),
+            border: `1px solid ${page===0 ? "rgba(255,255,255,0.07)" : arr.border}`,
+            color: page===0 ? arr.disabledText : arr.text,
+            cursor: page===0 ? "not-allowed" : "pointer",
+            transition:"all 0.2s",
+          }}>
+          <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+
+        <div style={{ display:"flex", gap:"0.5rem", alignItems:"center" }}>
+          {Array.from({ length: totalPages }).map((_, i) => (
+            <button key={i} onClick={() => setPage(i)} style={{
+              height:10, width: i===page ? 24 : 10,
+              borderRadius:999,
+              background: i===page ? C.dotActive(isDark) : C.dotInactive(isDark),
+              border:"none", cursor:"pointer",
+              transition:"all 0.25s",
+              boxShadow: i===page ? C.accentGlow(isDark) : "none",
+            }} />
+          ))}
+        </div>
+
+        <button
+          onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+          disabled={page === totalPages - 1}
+          onMouseEnter={() => setHovR(true)}
+          onMouseLeave={() => setHovR(false)}
+          style={{
+            width:40, height:40, borderRadius:"50%",
+            display:"flex", alignItems:"center", justifyContent:"center",
+            background: page===totalPages-1 ? "rgba(255,255,255,0.03)" : (hovR ? arr.hoverBg : arr.bg),
+            border: `1px solid ${page===totalPages-1 ? "rgba(255,255,255,0.07)" : arr.border}`,
+            color: page===totalPages-1 ? arr.disabledText : arr.text,
+            cursor: page===totalPages-1 ? "not-allowed" : "pointer",
+            transition:"all 0.2s",
+          }}>
+          <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
+
+      <p style={{ fontSize:"0.7rem", color: C.muted(isDark) }}>{page + 1} / {totalPages}</p>
     </div>
   );
 }
@@ -65,107 +183,112 @@ export default function Testimonials() {
   const totalPages = Math.ceil(TESTIMONIALS.length / PER_PAGE);
   const current    = TESTIMONIALS.slice(page * PER_PAGE, page * PER_PAGE + PER_PAGE);
 
-  const textMain   = isDark ? "text-white"        : "text-blue-950";
-  const textSub    = isDark ? "text-white/60"     : "text-blue-900/80";
-  const textMuted  = isDark ? "text-white/35"     : "text-blue-900/50";
-  const cardBg     = isDark ? "bg-white/5"        : "bg-white/60";
-  const cardBorder = isDark ? "border-white/8"    : "border-blue-200";
-  const cardHover  = isDark ? "hover:bg-white/10" : "hover:bg-white";
-  const quoteMark  = isDark ? "text-white/10"     : "text-blue-200";
-  const glow       = isDark ? "0 0 40px rgba(180,60,100,0.5)" : "none";
-
-  const arrowBase = "w-10 h-10 rounded-full flex items-center justify-center border transition-all duration-200 cursor-pointer";
-  const arrowOn   = isDark
-    ? "bg-white/10 border-white/20 text-white hover:bg-white/20"
-    : "bg-white/60 border-blue-200 text-blue-900 hover:bg-white";
-  const arrowOff  = isDark
-    ? "bg-white/3 border-white/8 text-white/20 cursor-not-allowed"
-    : "bg-black/3 border-black/8 text-black/20 cursor-not-allowed";
-
   return (
-    <div className="py-16 px-6">
-      {/* Header */}
-      <div className="text-center mb-12">
-        <span className={`inline-block bg-white/10 border border-white/20 text-sm font-semibold px-4 py-1 rounded-full mb-4 tracking-wide ${textSub}`}>
+    <div style={{ padding:"4rem 1.5rem" }}>
+
+      {/* ── Header ──────────────────────────────────────────────────────── */}
+      <div style={{ textAlign:"center", marginBottom:"3rem" }}>
+        <span style={{
+          display:"inline-block",
+          background: C.cardBg(isDark),
+          border: `1px solid ${C.cardBorder(isDark)}`,
+          color: C.label(isDark),
+          fontSize:"0.75rem", fontWeight:700,
+          letterSpacing:"0.14em", textTransform:"uppercase",
+          padding:"0.3rem 1.1rem", borderRadius:999,
+          marginBottom:"1.2rem",
+          backdropFilter:"blur(10px)",
+          textShadow: C.textShadow(isDark),
+        }}>
           What Clients Say
         </span>
-        <h2 className={`text-4xl sm:text-5xl font-bold mb-4 tracking-tight ${textMain}`} style={{ textShadow: glow }}>
-          Testimonials
+
+        <h2 style={{
+          fontSize:"clamp(2rem, 5vw, 3.2rem)",
+          fontWeight:800, lineHeight:1.1,
+          color: C.heading(isDark),
+          textShadow: C.textShadow(isDark),
+          margin:"0 0 1rem",
+        }}>
+          <span style={{ color: C.accent(isDark), textShadow: C.accentGlow(isDark) }}>
+            Testimonials
+          </span>
         </h2>
-        <p className={`text-lg max-w-2xl mx-auto leading-relaxed ${textSub}`}>
+
+        <p style={{
+          fontSize:"1.05rem", lineHeight:1.7,
+          color: C.body(isDark),
+          textShadow: C.textShadow(isDark),
+          maxWidth:"40rem", margin:"0 auto",
+        }}>
           Real feedback from businesses we've helped systemize and scale.
         </p>
       </div>
 
-      {/* Cards Grid */}
-      <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* ── Cards grid ──────────────────────────────────────────────────── */}
+      <div style={{
+        maxWidth:"72rem", margin:"0 auto",
+        display:"grid",
+        gridTemplateColumns:"repeat(auto-fit, minmax(280px, 1fr))",
+        gap:"1.5rem",
+      }}>
         {current.map((t, i) => (
-          <div key={t.name}
-            className={`relative backdrop-blur-md border rounded-2xl p-6 flex flex-col gap-4 ${cardHover} hover:-translate-y-1 transition-all duration-300 shadow-lg ${cardBg} ${cardBorder}`}>
-            {/* Quote mark */}
-            <span className={`absolute top-4 right-5 text-6xl font-serif leading-none select-none ${quoteMark}`}>"</span>
+          <GlassCard key={t.name} isDark={isDark} style={{
+            padding:"1.75rem",
+            display:"flex", flexDirection:"column", gap:"1rem",
+          }}>
+            {/* Decorative quote mark */}
+            <span style={{
+              position:"absolute", top:"1rem", right:"1.25rem",
+              fontSize:"4.5rem", fontFamily:"Georgia, serif", lineHeight:1,
+              color: C.quoteMark(isDark),
+              userSelect:"none", pointerEvents:"none",
+            }}>
+              "
+            </span>
 
             <StarRating rating={t.rating} isDark={isDark} />
 
-            <p className={`text-sm leading-relaxed flex-1 ${textSub}`}>"{t.feedback}"</p>
+            <p style={{
+              fontSize:"0.875rem", lineHeight:1.7,
+              color: C.body(isDark),
+              flex:1, margin:0,
+              textShadow: C.textShadow(isDark),
+            }}>
+              "{t.feedback}"
+            </p>
 
-            <div className={`h-px w-full ${isDark ? "bg-white/8" : "bg-blue-100"}`} />
+            {/* Divider */}
+            <div style={{ height:1, background: C.divider(isDark) }} />
 
-            <div className="flex items-center gap-3">
+            {/* Author */}
+            <div style={{ display:"flex", alignItems:"center", gap:"0.75rem" }}>
               <AvatarInitials initials={t.avatar} index={page * PER_PAGE + i} />
               <div>
-                <p className={`font-bold text-sm ${textMain}`}>{t.name}</p>
-                <p className={`text-xs ${textMuted}`}>{t.company}</p>
+                <p style={{
+                  fontWeight:700, fontSize:"0.9rem",
+                  color: C.heading(isDark),
+                  textShadow: C.textShadow(isDark),
+                  margin:0,
+                }}>
+                  {t.name}
+                </p>
+                <p style={{
+                  fontSize:"0.75rem",
+                  color: C.muted(isDark),
+                  margin:0,
+                }}>
+                  {t.company}
+                </p>
               </div>
             </div>
-          </div>
+          </GlassCard>
         ))}
       </div>
 
-      {/* Pagination */}
-      <div className="flex items-center justify-center gap-4 mt-10">
-        {/* Prev */}
-        <button
-          onClick={() => setPage((p) => Math.max(0, p - 1))}
-          disabled={page === 0}
-          className={`${arrowBase} ${page === 0 ? arrowOff : arrowOn}`}
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
+      {/* ── Pagination ──────────────────────────────────────────────────── */}
+      <Pagination page={page} totalPages={totalPages} setPage={setPage} isDark={isDark} />
 
-        {/* Dots */}
-        <div className="flex gap-2">
-          {Array.from({ length: totalPages }).map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setPage(i)}
-              className={`rounded-full transition-all duration-200 ${
-                i === page
-                  ? isDark ? "w-6 h-2.5 bg-white/70" : "w-6 h-2.5 bg-blue-500"
-                  : isDark ? "w-2.5 h-2.5 bg-white/20 hover:bg-white/40" : "w-2.5 h-2.5 bg-blue-200 hover:bg-blue-400"
-              }`}
-            />
-          ))}
-        </div>
-
-        {/* Next */}
-        <button
-          onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-          disabled={page === totalPages - 1}
-          className={`${arrowBase} ${page === totalPages - 1 ? arrowOff : arrowOn}`}
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
-      </div>
-
-      {/* Page counter */}
-      <p className={`text-center text-xs mt-3 ${textMuted}`}>
-        {page + 1} / {totalPages}
-      </p>
     </div>
   );
 }

@@ -16,53 +16,141 @@ function parseService(page) {
   return { title, desc, icon, logo };
 }
 
-function SkeletonCard({ cardBg, cardBorder }) {
+// ── Color tokens — both modes sit over a DARK 3D background ──────────────────
+const C = {
+  label:       (d) => d ? "rgba(210,150,255,1)"   : "rgba(100,240,255,1)",
+  heading:     (d) => d ? "#ffffff"               : "#e8fffe",
+  accent:      (d) => d ? "#c084fc"               : "#22d3ee",
+  body:        (d) => d ? "rgba(200,200,220,1)"   : "rgba(170,235,245,1)",
+  muted:       (d) => d ? "rgba(150,150,180,1)"   : "rgba(120,200,220,1)",
+  cardBg:      (d) => d ? "rgba(255,255,255,0.05)": "rgba(0,60,80,0.35)",
+  cardBorder:  (d) => d ? "rgba(255,255,255,0.09)": "rgba(0,200,230,0.20)",
+  cardHoverBg: (d) => d ? "rgba(255,255,255,0.10)": "rgba(0,80,110,0.50)",
+  skeletonBg:  (d) => d ? "rgba(255,255,255,0.08)": "rgba(0,180,220,0.15)",
+  btnBg:       (d) => d ? "rgba(255,255,255,0.10)": "rgba(8,145,178,1)",
+  btnBorder:   (d) => d ? "rgba(255,255,255,0.22)": "transparent",
+  btnText:     (d) => "#ffffff",
+  btnHoverBg:  (d) => d ? "rgba(255,255,255,0.18)": "rgba(6,182,212,1)",
+  btnShadow:   (d) => d ? "rgba(180,80,255,0.30)" : "rgba(6,182,212,0.40)",
+  dotActive:   (d) => d ? "#a855f7"               : "#22d3ee",
+  dotInactive: (d) => d ? "rgba(255,255,255,0.20)": "rgba(0,210,240,0.25)",
+  accentGlow:  (d) => d ? "0 0 28px rgba(192,132,252,0.55)" : "0 0 28px rgba(34,211,238,0.50)",
+  textShadow:  (d) => d ? "0 2px 20px rgba(0,0,0,0.8)"     : "0 2px 20px rgba(0,15,30,0.9)",
+  arrowBtn:    (d) => d
+    ? { bg:"rgba(255,255,255,0.10)", border:"rgba(255,255,255,0.18)", text:"#fff",    hoverBg:"rgba(255,255,255,0.18)", disabledText:"rgba(255,255,255,0.18)" }
+    : { bg:"rgba(0,60,80,0.40)",     border:"rgba(0,210,240,0.35)",   text:"#b0f0ff", hoverBg:"rgba(0,90,120,0.55)",   disabledText:"rgba(0,200,230,0.18)"   },
+};
+
+// ── Reusable glass card ────────────────────────────────────────────────────────
+function GlassCard({ isDark, children, style = {} }) {
+  const [hov, setHov] = useState(false);
   return (
-    <div className={`animate-pulse backdrop-blur-md border rounded-2xl p-6 flex flex-col gap-3 ${cardBg} ${cardBorder}`}>
-      <div className="w-10 h-10 rounded-lg bg-white/10" />
-      <div className="h-4 w-32 rounded-full bg-white/10" />
-      <div className="h-3 w-full rounded bg-white/10" />
-      <div className="h-3 w-5/6 rounded bg-white/10" />
+    <div
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      style={{
+        background: hov ? C.cardHoverBg(isDark) : C.cardBg(isDark),
+        border: `1px solid ${C.cardBorder(isDark)}`,
+        borderRadius: "1rem",
+        backdropFilter: "blur(14px)",
+        WebkitBackdropFilter: "blur(14px)",
+        boxShadow: hov
+          ? (isDark ? "0 8px 40px rgba(0,0,0,0.5)" : "0 8px 40px rgba(0,30,50,0.45)")
+          : (isDark ? "0 4px 20px rgba(0,0,0,0.3)" : "0 4px 20px rgba(0,20,40,0.30)"),
+        transform: hov ? "translateY(-4px)" : "translateY(0)",
+        transition: "all 0.3s ease",
+        ...style,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function SkeletonCard({ isDark }) {
+  return (
+    <div style={{
+      background: C.cardBg(isDark),
+      border: `1px solid ${C.cardBorder(isDark)}`,
+      borderRadius: "1rem",
+      padding: "1.5rem",
+      display: "flex", flexDirection: "column", gap: "0.75rem",
+      backdropFilter: "blur(12px)",
+      animation: "pulse 1.5s ease-in-out infinite",
+    }}>
+      {[40, 128, 200, 160].map((w, i) => (
+        <div key={i} style={{
+          height: i === 0 ? 40 : 12,
+          width: i === 0 ? 40 : w,
+          borderRadius: i === 0 ? "0.5rem" : 999,
+          background: C.skeletonBg(isDark),
+        }} />
+      ))}
     </div>
   );
 }
 
 function Pagination({ page, totalPages, setPage, isDark }) {
   if (totalPages <= 1) return null;
-  const arrowBase = "w-10 h-10 rounded-full flex items-center justify-center border transition-all duration-200 cursor-pointer";
-  const arrowOn   = isDark ? "bg-white/10 border-white/20 text-white hover:bg-white/20" : "bg-white/60 border-blue-200 text-blue-900 hover:bg-white";
-  const arrowOff  = isDark ? "bg-white/3 border-white/8 text-white/20 cursor-not-allowed" : "bg-black/3 border-black/8 text-black/20 cursor-not-allowed";
-  const textMuted = isDark ? "text-white/35" : "text-blue-900/50";
+  const [hovL, setHovL] = useState(false);
+  const [hovR, setHovR] = useState(false);
+  const arr = C.arrowBtn(isDark);
 
   return (
-    <div className="flex flex-col items-center gap-3 mt-10">
-      <div className="flex items-center gap-4">
-        <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}
-          className={`${arrowBase} ${page === 0 ? arrowOff : arrowOn}`}>
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+    <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:"0.75rem", marginTop:"2.5rem" }}>
+      <div style={{ display:"flex", alignItems:"center", gap:"1rem" }}>
+        <button
+          onClick={() => setPage(p => Math.max(0, p - 1))}
+          disabled={page === 0}
+          onMouseEnter={() => setHovL(true)}
+          onMouseLeave={() => setHovL(false)}
+          style={{
+            width:40, height:40, borderRadius:"50%",
+            display:"flex", alignItems:"center", justifyContent:"center",
+            background: page===0 ? "rgba(255,255,255,0.03)" : (hovL ? arr.hoverBg : arr.bg),
+            border: `1px solid ${page===0 ? "rgba(255,255,255,0.07)" : arr.border}`,
+            color: page===0 ? arr.disabledText : arr.text,
+            cursor: page===0 ? "not-allowed" : "pointer",
+            transition: "all 0.2s",
+          }}>
+          <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
 
-        <div className="flex gap-2">
+        <div style={{ display:"flex", gap:"0.5rem", alignItems:"center" }}>
           {Array.from({ length: totalPages }).map((_, i) => (
-            <button key={i} onClick={() => setPage(i)}
-              className={`rounded-full transition-all duration-200 ${
-                i === page
-                  ? isDark ? "w-6 h-2.5 bg-white/70" : "w-6 h-2.5 bg-blue-500"
-                  : isDark ? "w-2.5 h-2.5 bg-white/20 hover:bg-white/40" : "w-2.5 h-2.5 bg-blue-200 hover:bg-blue-400"
-              }`} />
+            <button key={i} onClick={() => setPage(i)} style={{
+              height:10, width: i===page ? 24 : 10,
+              borderRadius:999,
+              background: i===page ? C.dotActive(isDark) : C.dotInactive(isDark),
+              border:"none", cursor:"pointer",
+              transition:"all 0.25s",
+              boxShadow: i===page ? C.accentGlow(isDark) : "none",
+            }} />
           ))}
         </div>
 
-        <button onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page === totalPages - 1}
-          className={`${arrowBase} ${page === totalPages - 1 ? arrowOff : arrowOn}`}>
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+        <button
+          onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+          disabled={page === totalPages - 1}
+          onMouseEnter={() => setHovR(true)}
+          onMouseLeave={() => setHovR(false)}
+          style={{
+            width:40, height:40, borderRadius:"50%",
+            display:"flex", alignItems:"center", justifyContent:"center",
+            background: page===totalPages-1 ? "rgba(255,255,255,0.03)" : (hovR ? arr.hoverBg : arr.bg),
+            border: `1px solid ${page===totalPages-1 ? "rgba(255,255,255,0.07)" : arr.border}`,
+            color: page===totalPages-1 ? arr.disabledText : arr.text,
+            cursor: page===totalPages-1 ? "not-allowed" : "pointer",
+            transition: "all 0.2s",
+          }}>
+          <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
           </svg>
         </button>
       </div>
-      <p className={`text-xs ${textMuted}`}>{page + 1} / {totalPages}</p>
+      <p style={{ fontSize:"0.7rem", color: C.muted(isDark) }}>{page + 1} / {totalPages}</p>
     </div>
   );
 }
@@ -73,16 +161,7 @@ export default function Services() {
   const [loading,  setLoading]  = useState(true);
   const [error,    setError]    = useState(null);
   const [page,     setPage]     = useState(0);
-
-  const textMain   = isDark ? "text-white"        : "text-blue-950";
-  const textSub    = isDark ? "text-white/60"     : "text-blue-900/80";
-  const cardBg     = isDark ? "bg-white/5"        : "bg-white/60";
-  const cardBorder = isDark ? "border-white/8"    : "border-blue-200";
-  const cardHover  = isDark ? "hover:bg-white/10" : "hover:bg-white";
-  const btnStyle   = isDark
-    ? "bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/18"
-    : "bg-blue-600 text-white hover:bg-blue-700";
-  const glow = isDark ? "0 0 40px rgba(180,60,100,0.5)" : "none";
+  const [btnHov,   setBtnHov]   = useState(false);
 
   useEffect(() => {
     async function fetchServices() {
@@ -113,64 +192,158 @@ export default function Services() {
   };
 
   return (
-    <div className="py-16 px-6">
-      {/* Header */}
-      <div className="text-center mb-14">
-        <span className={`inline-block bg-white/10 border border-white/20 text-sm font-semibold px-4 py-1 rounded-full mb-4 tracking-wide ${textSub}`}>
+    <div style={{ padding:"4rem 1.5rem" }}>
+      <style>{`
+        @media (max-width: 768px) {
+          .services-grid { grid-template-columns: repeat(2, 1fr) !important; }
+        }
+        @media (max-width: 480px) {
+          .services-grid { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
+
+      {/* ── Header ──────────────────────────────────────────────────────── */}
+      <div style={{ textAlign:"center", marginBottom:"3.5rem" }}>
+        <span style={{
+          display:"inline-block",
+          background: C.cardBg(isDark),
+          border: `1px solid ${C.cardBorder(isDark)}`,
+          color: C.label(isDark),
+          fontSize:"0.75rem", fontWeight:700,
+          letterSpacing:"0.14em", textTransform:"uppercase",
+          padding:"0.3rem 1.1rem", borderRadius:999,
+          marginBottom:"1.2rem",
+          backdropFilter:"blur(10px)",
+          textShadow: C.textShadow(isDark),
+        }}>
           What We Offer
         </span>
-        <h2 className={`text-5xl font-bold mb-4 tracking-tight ${textMain}`} style={{ textShadow: glow }}>
-          Our Services
+
+        <h2 style={{
+          fontSize:"clamp(2rem, 5vw, 3.2rem)",
+          fontWeight:800, lineHeight:1.1,
+          color: C.heading(isDark),
+          textShadow: C.textShadow(isDark),
+          margin:"0 0 1rem",
+        }}>
+          Our{" "}
+          <span style={{ color: C.accent(isDark), textShadow: C.accentGlow(isDark) }}>
+            Services
+          </span>
         </h2>
-        <p className={`text-lg max-w-2xl mx-auto leading-relaxed ${textSub}`}>
+
+        <p style={{
+          fontSize:"1.05rem", lineHeight:1.7,
+          color: C.body(isDark),
+          textShadow: C.textShadow(isDark),
+          maxWidth:"40rem", margin:"0 auto",
+        }}>
           From Notion workspaces to full automation pipelines — we build systems
           that save time, reduce errors, and scale with your business.
         </p>
       </div>
 
-      {/* Grid */}
-      <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {loading && [...Array(6)].map((_, i) => (
-          <SkeletonCard key={i} cardBg={cardBg} cardBorder={cardBorder} />
-        ))}
+      {/* ── Grid ────────────────────────────────────────────────────────── */}
+      <div className="services-grid" style={{
+        maxWidth:"72rem", margin:"0 auto",
+        display:"grid",
+        gridTemplateColumns:"repeat(3, 1fr)",
+        gridTemplateRows:"repeat(2, auto)",
+        gap:"1.5rem",
+      }}>
+        {loading && [...Array(6)].map((_, i) => <SkeletonCard key={i} isDark={isDark} />)}
+
         {error && (
-          <div className="col-span-full text-center py-10">
-            <p className="text-red-400 text-sm mb-1">⚠️ Failed to load services from Notion</p>
-            <p className="text-white/30 text-xs">{error}</p>
+          <div style={{ gridColumn:"1/-1", textAlign:"center", padding:"2.5rem 0" }}>
+            <p style={{ color:"#f87171", fontSize:"0.875rem", marginBottom:"0.25rem" }}>⚠️ Failed to load services from Notion</p>
+            <p style={{ color: C.muted(isDark), fontSize:"0.75rem" }}>{error}</p>
           </div>
         )}
+
         {!loading && !error && services.length === 0 && (
-          <p className={`col-span-full text-center text-sm ${textSub}`}>No services found in Notion database.</p>
+          <p style={{ gridColumn:"1/-1", textAlign:"center", fontSize:"0.875rem", color: C.muted(isDark) }}>
+            No services found in Notion database.
+          </p>
         )}
+
         {!loading && !error && current.map((s, i) => (
-          <div key={s.title + i}
-            className={`backdrop-blur-md border rounded-2xl p-6 ${cardHover} hover:-translate-y-1 transition-all duration-300 shadow-lg flex flex-col gap-3 group ${cardBg} ${cardBorder}`}>
+          <GlassCard key={s.title + i} isDark={isDark} style={{
+            padding:"1.75rem",
+            display:"flex", flexDirection:"column", gap:"0.85rem",
+          }}>
             {s.logo
-              ? <img src={s.logo} alt={s.title} className="w-12 h-12 object-contain rounded-lg" />
-              : <span className="text-4xl">{s.icon}</span>
+              ? <img src={s.logo} alt={s.title} style={{ width:48, height:48, objectFit:"contain", borderRadius:"0.5rem" }} />
+              : <span style={{ fontSize:"2.4rem", lineHeight:1 }}>{s.icon}</span>
             }
-            <h3 className={`font-bold text-xl group-hover:opacity-80 transition-opacity ${textMain}`}>{s.title}</h3>
-            <p className={`text-sm leading-relaxed ${textSub}`}>{s.desc}</p>
-          </div>
+            <h3 style={{
+              fontWeight:700, fontSize:"1.15rem",
+              color: C.heading(isDark),
+              textShadow: C.textShadow(isDark),
+              margin:0,
+            }}>
+              {s.title}
+            </h3>
+            <p style={{
+              fontSize:"0.875rem", lineHeight:1.65,
+              color: C.body(isDark),
+              margin:0,
+            }}>
+              {s.desc}
+            </p>
+          </GlassCard>
         ))}
       </div>
 
-      {/* Pagination — only shows if more than 6 services */}
+      {/* ── Pagination ──────────────────────────────────────────────────── */}
       {!loading && !error && (
         <Pagination page={page} totalPages={totalPages} setPage={setPage} isDark={isDark} />
       )}
 
-      {/* CTA */}
-      <div className={`max-w-6xl mx-auto mt-14 backdrop-blur-md border rounded-2xl p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl ${cardBg} ${cardBorder}`}>
+      {/* ── CTA banner ──────────────────────────────────────────────────── */}
+      <GlassCard isDark={isDark} style={{
+        maxWidth:"72rem", margin:"3.5rem auto 0",
+        padding:"2rem 2.5rem",
+        display:"flex", flexWrap:"wrap",
+        alignItems:"center", justifyContent:"space-between",
+        gap:"1.5rem",
+      }}>
         <div>
-          <h3 className={`font-bold text-2xl mb-1 ${textMain}`} style={{ textShadow: glow }}>Need a custom automation?</h3>
-          <p className={textSub}>Tell us what you need — we'll build it for you.</p>
+          <h3 style={{
+            fontWeight:700, fontSize:"1.4rem",
+            color: C.heading(isDark),
+            textShadow: C.textShadow(isDark),
+            margin:"0 0 0.4rem",
+          }}>
+            Need a custom automation?
+          </h3>
+          <p style={{ color: C.body(isDark), margin:0, fontSize:"0.95rem" }}>
+            Tell us what you need — we'll build it for you.
+          </p>
         </div>
-        <button onClick={scrollToBook}
-          className={`font-bold px-8 py-3 rounded-xl hover:-translate-y-1 transition-all duration-200 shadow-lg whitespace-nowrap ${btnStyle}`}>
+
+        <button
+          onClick={scrollToBook}
+          onMouseEnter={() => setBtnHov(true)}
+          onMouseLeave={() => setBtnHov(false)}
+          style={{
+            padding:"0.85rem 2rem",
+            borderRadius:"0.85rem",
+            fontWeight:700, fontSize:"0.95rem",
+            color: C.btnText(isDark),
+            background: btnHov ? C.btnHoverBg(isDark) : C.btnBg(isDark),
+            border: `1px solid ${C.btnBorder(isDark)}`,
+            backdropFilter: isDark ? "blur(8px)" : "none",
+            cursor:"pointer",
+            boxShadow: `0 6px 28px ${C.btnShadow(isDark)}`,
+            transform: btnHov ? "translateY(-2px)" : "translateY(0)",
+            transition:"all 0.2s ease",
+            whiteSpace:"nowrap",
+            textShadow:"0 1px 4px rgba(0,0,0,0.35)",
+          }}>
           📅 Book a Consultation
         </button>
-      </div>
+      </GlassCard>
+
     </div>
   );
 }

@@ -16,7 +16,7 @@ function SectionDot({ label, active, isDark, onClick }) {
         width: 1, height: 44,
         background: isDark
           ? "linear-gradient(to bottom, transparent, rgba(180,80,255,0.3), transparent)"
-          : "linear-gradient(to bottom, transparent, rgba(0,188,212,0.4), transparent)",
+          : "linear-gradient(to bottom, transparent, rgba(0,220,255,0.4), transparent)",
       }} />
 
       {/* Dot button */}
@@ -29,12 +29,12 @@ function SectionDot({ label, active, isDark, onClick }) {
           borderRadius: "50%",
           border: isDark
             ? `2px solid rgba(180,80,255,${active ? 0.95 : 0.4})`
-            : `2px solid rgba(0,188,212,${active ? 0.95 : 0.4})`,
+            : `2px solid rgba(0,220,255,${active ? 0.95 : 0.5})`,
           background: active
-            ? (isDark ? "rgba(180,80,255,0.75)" : "rgba(0,200,220,0.75)")
+            ? (isDark ? "rgba(180,80,255,0.75)" : "rgba(0,220,255,0.75)")
             : "transparent",
           boxShadow: active
-            ? (isDark ? "0 0 12px 4px rgba(180,80,255,0.5)" : "0 0 12px 4px rgba(0,220,255,0.45)")
+            ? (isDark ? "0 0 12px 4px rgba(180,80,255,0.5)" : "0 0 12px 4px rgba(0,220,255,0.5)")
             : "none",
           cursor: "pointer",
           padding: 0,
@@ -43,7 +43,6 @@ function SectionDot({ label, active, isDark, onClick }) {
           transition: "all 0.4s cubic-bezier(0.34,1.56,0.64,1)",
         }}
       >
-        {/* Pulse ring */}
         {active && (
           <span style={{
             position: "absolute",
@@ -63,7 +62,7 @@ function SectionDot({ label, active, isDark, onClick }) {
         width: 1, height: 44,
         background: isDark
           ? "linear-gradient(to bottom, transparent, rgba(180,80,255,0.3), transparent)"
-          : "linear-gradient(to bottom, transparent, rgba(0,188,212,0.4), transparent)",
+          : "linear-gradient(to bottom, transparent, rgba(0,220,255,0.4), transparent)",
       }} />
     </div>
   );
@@ -72,6 +71,29 @@ function SectionDot({ label, active, isDark, onClick }) {
 // ─── Section order ────────────────────────────────────────────────────────────
 const SECTIONS = ["home", "services", "case-studies", "about", "testimonials", "book"];
 
+// ─── Color tokens — both modes render over a DARK 3D background ──────────────
+// Dark mode  → deep space  (near-black, purple accents)
+// Light mode → deep ocean  (dark teal abyss, cyan accents)
+// Therefore: text is always light; only accent hue changes.
+const C = {
+  // Eyebrow / label text
+  label:   (d) => d ? "rgba(200,140,255,1)"  : "rgba(100,240,255,1)",
+  // Primary heading
+  heading: (d) => d ? "#ffffff"              : "#e8fffe",
+  // Accent word in heading
+  accent:  (d) => d ? "#c084fc"             : "#22d3ee",
+  // Body / sub text
+  body:    (d) => d ? "rgba(210,210,230,1)"  : "rgba(180,240,248,1)",
+  // Primary button bg
+  btnPrimary: (d) => d
+    ? { bg: "#9333ea", hover: "#a855f7", shadow: "rgba(147,51,234,0.45)" }
+    : { bg: "#0891b2", hover: "#06b6d4", shadow: "rgba(6,182,212,0.45)" },
+  // Ghost button
+  btnGhost: (d) => d
+    ? { border: "rgba(192,132,252,0.45)", text: "#d8b4fe" }
+    : { border: "rgba(34,211,238,0.50)", text: "#67e8f9" },
+};
+
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 export default function Dashboard() {
   const { isDark } = useTheme();
@@ -79,7 +101,11 @@ export default function Dashboard() {
   const lastSectionRef = useRef("home");
   const burstCooldown  = useRef(false);
 
-  // Fire burst event (debounced)
+  // Hover state for buttons
+  const [primaryHover, setPrimaryHover]   = useState(false);
+  const [ghostHover,   setGhostHover]     = useState(false);
+  const [ctaHover,     setCtaHover]       = useState(false);
+
   const fireBurst = useCallback(() => {
     if (burstCooldown.current) return;
     burstCooldown.current = true;
@@ -107,7 +133,6 @@ export default function Dashboard() {
     return () => window.removeEventListener("scroll", onScroll);
   }, [fireBurst]);
 
-  // Smooth scroll helper
   const scrollTo = (id) => {
     const el  = document.getElementById(id);
     const nav = document.querySelector("nav");
@@ -117,7 +142,6 @@ export default function Dashboard() {
     fireBurst();
   };
 
-  // Separator between two section ids
   const Separator = ({ afterId }) => {
     const idx  = SECTIONS.indexOf(afterId);
     const next = SECTIONS[idx + 1];
@@ -131,6 +155,9 @@ export default function Dashboard() {
       />
     );
   };
+
+  const btn     = C.btnPrimary(isDark);
+  const ghost   = C.btnGhost(isDark);
 
   return (
     <>
@@ -152,35 +179,104 @@ export default function Dashboard() {
         {/* ── Hero ─────────────────────────────────────────────────────── */}
         <section id="home" className="w-full min-h-screen flex flex-col items-center justify-center px-6 text-center">
           <div className="max-w-3xl mx-auto space-y-6">
-            <p className={`text-sm font-semibold tracking-widest uppercase ${isDark ? "text-purple-300" : "text-cyan-700"}`}>
+
+            {/* Eyebrow */}
+            <p style={{
+              fontSize: "0.75rem",
+              fontWeight: 700,
+              letterSpacing: "0.18em",
+              textTransform: "uppercase",
+              color: C.label(isDark),
+              textShadow: isDark
+                ? "0 0 18px rgba(200,140,255,0.6)"
+                : "0 0 18px rgba(0,240,255,0.5)",
+            }}>
               Notion Automation Agency
             </p>
-            <h1 className={`text-5xl md:text-7xl font-bold leading-tight ${isDark ? "text-white" : "text-gray-900"}`}>
+
+            {/* Headline */}
+            <h1 style={{
+              fontSize: "clamp(2.4rem, 7vw, 4.5rem)",
+              fontWeight: 800,
+              lineHeight: 1.1,
+              color: C.heading(isDark),
+              textShadow: isDark
+                ? "0 2px 40px rgba(0,0,0,0.8)"
+                : "0 2px 40px rgba(0,20,40,0.9)",
+            }}>
               We Build{" "}
-              <span className={isDark ? "text-purple-400" : "text-cyan-600"}>Systems</span>
+              <span style={{
+                color: C.accent(isDark),
+                textShadow: isDark
+                  ? "0 0 30px rgba(192,132,252,0.7)"
+                  : "0 0 30px rgba(34,211,238,0.7)",
+              }}>
+                Systems
+              </span>
               {" "}That Work While You Sleep
             </h1>
-            <p className={`text-lg md:text-xl max-w-2xl mx-auto ${isDark ? "text-gray-300" : "text-gray-700"}`}>
-              Notion dashboards, automation workflows, and smart integrations — designed for founders who want clarity without chaos.
+
+            {/* Sub-text */}
+            <p style={{
+              fontSize: "clamp(1rem, 2.2vw, 1.2rem)",
+              maxWidth: "38rem",
+              margin: "0 auto",
+              color: C.body(isDark),
+              textShadow: isDark
+                ? "0 1px 12px rgba(0,0,0,0.7)"
+                : "0 1px 12px rgba(0,10,30,0.8)",
+              lineHeight: 1.65,
+            }}>
+              Notion dashboards, automation workflows, and smart integrations —
+              designed for founders who want clarity without chaos.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+
+            {/* CTA buttons */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", justifyContent: "center", paddingTop: "1rem" }}>
+              {/* Primary */}
               <button
                 onClick={() => scrollTo("book")}
-                className={`px-8 py-4 rounded-2xl font-semibold text-white transition-all duration-200 hover:scale-105 ${
-                  isDark
-                    ? "bg-purple-600 hover:bg-purple-500 shadow-lg shadow-purple-900/40"
-                    : "bg-cyan-600 hover:bg-cyan-500 shadow-lg shadow-cyan-300/40"
-                }`}
+                onMouseEnter={() => setPrimaryHover(true)}
+                onMouseLeave={() => setPrimaryHover(false)}
+                style={{
+                  padding: "1rem 2rem",
+                  borderRadius: "1rem",
+                  fontWeight: 700,
+                  fontSize: "1rem",
+                  color: "#ffffff",
+                  background: primaryHover ? btn.hover : btn.bg,
+                  border: "none",
+                  cursor: "pointer",
+                  boxShadow: `0 8px 32px ${btn.shadow}`,
+                  transform: primaryHover ? "scale(1.05)" : "scale(1)",
+                  transition: "all 0.2s ease",
+                  textShadow: "0 1px 4px rgba(0,0,0,0.4)",
+                }}
               >
                 Book a Free Call
               </button>
+
+              {/* Ghost */}
               <button
                 onClick={() => scrollTo("services")}
-                className={`px-8 py-4 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 border ${
-                  isDark
-                    ? "border-purple-500/40 text-purple-300 hover:bg-purple-900/30"
-                    : "border-cyan-400/50 text-cyan-700 hover:bg-cyan-50"
-                }`}
+                onMouseEnter={() => setGhostHover(true)}
+                onMouseLeave={() => setGhostHover(false)}
+                style={{
+                  padding: "1rem 2rem",
+                  borderRadius: "1rem",
+                  fontWeight: 700,
+                  fontSize: "1rem",
+                  color: ghostHover ? "#ffffff" : ghost.text,
+                  background: ghostHover
+                    ? (isDark ? "rgba(147,51,234,0.25)" : "rgba(6,182,212,0.22)")
+                    : "rgba(255,255,255,0.06)",
+                  border: `1.5px solid ${ghost.border}`,
+                  cursor: "pointer",
+                  backdropFilter: "blur(8px)",
+                  transform: ghostHover ? "scale(1.05)" : "scale(1)",
+                  transition: "all 0.2s ease",
+                  textShadow: "0 1px 8px rgba(0,0,0,0.5)",
+                }}
               >
                 See Our Services
               </button>
@@ -226,21 +322,56 @@ export default function Dashboard() {
         {/* ── Final CTA ─────────────────────────────────────────────────── */}
         <section className="w-full py-24 flex flex-col items-center justify-center text-center px-6">
           <div className="max-w-2xl mx-auto space-y-6">
-            <h2 className={`text-4xl md:text-5xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
+
+            <h2 style={{
+              fontSize: "clamp(2rem, 5vw, 3.2rem)",
+              fontWeight: 800,
+              color: C.heading(isDark),
+              textShadow: isDark
+                ? "0 2px 40px rgba(0,0,0,0.8)"
+                : "0 2px 40px rgba(0,20,40,0.9)",
+              lineHeight: 1.15,
+            }}>
               Ready to{" "}
-              <span className={isDark ? "text-purple-400" : "text-cyan-600"}>Automate</span>
+              <span style={{
+                color: C.accent(isDark),
+                textShadow: isDark
+                  ? "0 0 28px rgba(192,132,252,0.65)"
+                  : "0 0 28px rgba(34,211,238,0.65)",
+              }}>
+                Automate
+              </span>
               {" "}Everything?
             </h2>
-            <p className={`text-lg ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+
+            <p style={{
+              fontSize: "1.1rem",
+              color: C.body(isDark),
+              textShadow: isDark
+                ? "0 1px 12px rgba(0,0,0,0.7)"
+                : "0 1px 12px rgba(0,10,30,0.8)",
+            }}>
               Let&apos;s build something that actually moves your business forward.
             </p>
+
             <button
               onClick={() => scrollTo("book")}
-              className={`px-10 py-4 rounded-2xl font-semibold text-white transition-all duration-200 hover:scale-105 ${
-                isDark
-                  ? "bg-purple-600 hover:bg-purple-500 shadow-xl shadow-purple-900/50"
-                  : "bg-cyan-600 hover:bg-cyan-500 shadow-xl shadow-cyan-300/50"
-              }`}
+              onMouseEnter={() => setCtaHover(true)}
+              onMouseLeave={() => setCtaHover(false)}
+              style={{
+                padding: "1rem 2.5rem",
+                borderRadius: "1rem",
+                fontWeight: 700,
+                fontSize: "1.05rem",
+                color: "#ffffff",
+                background: ctaHover ? btn.hover : btn.bg,
+                border: "none",
+                cursor: "pointer",
+                boxShadow: `0 10px 40px ${btn.shadow}`,
+                transform: ctaHover ? "scale(1.05)" : "scale(1)",
+                transition: "all 0.2s ease",
+                textShadow: "0 1px 4px rgba(0,0,0,0.4)",
+              }}
             >
               Get Started Today
             </button>
