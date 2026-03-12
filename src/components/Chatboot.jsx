@@ -55,7 +55,7 @@ function BookingCard() {
         <div style={{ width:"38px", height:"38px", borderRadius:"10px", background:"linear-gradient(135deg,#0ea5e9,#2563eb)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"18px", flexShrink:0 }}>📅</div>
         <div>
           <p style={{ margin:0, fontSize:"14px", fontWeight:700, color:"white", lineHeight:1.2 }}>Book a Free 30-Min Call</p>
-          <p style={{ margin:"2px 0 0", fontSize:"11px", color:"#7dd3fc" }}>with Notionnik Team · No commitment</p>
+          <p style={{ margin:"2px 0 0", fontSize:"11px", color:"#7dd3fc" }}>with NotionNik Team</p>
         </div>
       </div>
       <div style={{ display:"flex", gap:"8px", flexWrap:"wrap", marginBottom:"14px" }}>
@@ -393,20 +393,6 @@ function FloatingChatButton({ onClick, hasUnread }) {
       <svg style={{ width:"22px", height:"22px", fill:"white", flexShrink:0 }} viewBox="0 0 24 24">
         <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
       </svg>
-
-      {/* Label */}
-      <span style={{ color:"white", fontWeight:700, fontSize:"14px", letterSpacing:"0.01em", whiteSpace:"nowrap" }}>
-        Chat with us
-      </span>
-
-      {/* Online dot */}
-      <span style={{
-        display:"inline-block", width:"8px", height:"8px",
-        background:"#4ade80", borderRadius:"50%",
-        boxShadow:"0 0 6px rgba(74,222,128,0.8)",
-        animation:"pkPulse 2s ease-in-out infinite",
-        flexShrink:0,
-      }}/>
 
       <style>{`@keyframes pkPulse { 0%,100%{opacity:1} 50%{opacity:0.5} }`}</style>
     </div>

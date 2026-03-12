@@ -136,8 +136,9 @@ function ThemeToggle() {
 // ─── Navbar ───────────────────────────────────────────────────────────────────
 export default function Navbar() {
   const { isDark } = useTheme();
-  const [open,    setOpen]    = useState(false);
-  const [active,  setActive]  = useState("home");
+  const navRef = useRef(null);
+  const [open,     setOpen]     = useState(false);
+  const [active,   setActive]   = useState("home");
   const [scrolled, setScrolled] = useState(false);
 
   const links = [
@@ -146,14 +147,15 @@ export default function Navbar() {
     { label: "About Us",     id: "about"        },
   ];
 
-  // ── Scroll spy: highlight active section ──
+  // ── Scroll spy ────────────────────────────────────────────────────────────
   useEffect(() => {
     const onScroll = () => {
       setScrolled(window.scrollY > 10);
-      const sections = ["home", "services", "case-studies", "about", "book"];
+      const navHeight = navRef.current?.offsetHeight || 76;
+      const sections  = ["home", "services", "case-studies", "about", "book"];
       for (let i = sections.length - 1; i >= 0; i--) {
         const el = document.getElementById(sections[i]);
-        if (el && window.scrollY >= el.offsetTop - 100) {
+        if (el && window.scrollY >= el.offsetTop - navHeight - 16) {
           setActive(sections[i]);
           break;
         }
@@ -163,17 +165,23 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // ── Scroll to section (accounts for sticky navbar height) ─────────────────
   const scrollTo = (id) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+    const el        = document.getElementById(id);
+    const navHeight = navRef.current?.offsetHeight || 76;
+    if (!el) return;
+
+    const top = el.getBoundingClientRect().top + window.scrollY - navHeight - 8;
+    window.scrollTo({ top, behavior: "smooth" });
     setOpen(false);
   };
 
   return (
     <nav
+      ref={navRef}
       className="sticky top-0 z-50 overflow-hidden shadow-xl transition-all duration-300"
       style={{
         minHeight: "76px",
-        // subtle extra blur/shadow once user has scrolled
         boxShadow: scrolled
           ? "0 4px 32px rgba(0,0,0,0.45)"
           : "0 4px 20px rgba(0,0,0,0.25)",
@@ -200,7 +208,7 @@ export default function Navbar() {
                 : "0 1px 10px rgba(30,100,200,0.6)",
             }}
           >
-            Notionnik
+            NotionNik
           </span>
         </button>
 

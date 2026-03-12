@@ -177,7 +177,6 @@ function SpaceCanvas() {
       const { width, height } = canvas;
       ctx.clearRect(0, 0, width, height);
 
-      // Deep space base
       const bg = ctx.createRadialGradient(width * 0.5, height * 0.4, 0, width * 0.5, height * 0.4, Math.max(width, height) * 0.8);
       bg.addColorStop(0,    "#1c080e");
       bg.addColorStop(0.40, "#110510");
@@ -187,7 +186,6 @@ function SpaceCanvas() {
       ctx.fillStyle = bg;
       ctx.fillRect(0, 0, width, height);
 
-      // Nebula glows
       nebulae.forEach((n) => {
         const nx = (n.x + Math.sin(t * 0.00025 + n.x * 4) * 0.012) * width;
         const ny = (n.y + Math.cos(t * 0.00018 + n.y * 4) * 0.010) * height;
@@ -239,10 +237,8 @@ function PrivacyModal({ isDark, onClose }) {
   const heading = isDark ? "text-white" : "text-black";
   const muted   = isDark ? "text-white/50" : "text-black/50";
 
-  // Close on backdrop click
   const handleBackdrop = (e) => { if (e.target === e.currentTarget) onClose(); };
 
-  // Lock body scroll while open
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = ""; };
@@ -254,7 +250,6 @@ function PrivacyModal({ isDark, onClose }) {
       onClick={handleBackdrop}
     >
       <div className={`relative w-full max-w-2xl max-h-[85vh] rounded-2xl border shadow-2xl flex flex-col ${modal}`}>
-        {/* Header */}
         <div className={`flex items-center justify-between px-6 py-4 border-b ${isDark ? "border-white/10" : "border-black/8"}`}>
           <h2 className={`text-xl font-bold ${heading}`}>🔒 Privacy Policy</h2>
           <button onClick={onClose}
@@ -262,40 +257,32 @@ function PrivacyModal({ isDark, onClose }) {
             ✕
           </button>
         </div>
-        {/* Scrollable body */}
         <div className="overflow-y-auto px-6 py-5 text-sm leading-relaxed space-y-5">
           <p className={muted}>Last updated: {new Date().getFullYear()}</p>
-
           <section>
             <h3 className={`font-bold text-base mb-1 ${heading}`}>1. Information We Collect</h3>
             <p>When you use our website or book a consultation, we may collect your name, email address, and any information you voluntarily provide through our booking or contact forms. We do not collect sensitive personal data unless explicitly required for service delivery.</p>
           </section>
-
           <section>
             <h3 className={`font-bold text-base mb-1 ${heading}`}>2. How We Use Your Information</h3>
             <p>We use the information we collect to respond to your inquiries, schedule consultations, deliver our services, and improve your experience on our platform. We do not sell, rent, or trade your personal data to third parties.</p>
           </section>
-
           <section>
             <h3 className={`font-bold text-base mb-1 ${heading}`}>3. Cookies & Analytics</h3>
             <p>Our website may use cookies or similar technologies to understand how visitors interact with our site. This data is used solely to improve performance and user experience. You may disable cookies in your browser settings at any time.</p>
           </section>
-
           <section>
             <h3 className={`font-bold text-base mb-1 ${heading}`}>4. Third-Party Services</h3>
             <p>We use third-party tools such as Calendly for scheduling. These services have their own privacy policies, and we encourage you to review them. We are not responsible for the data practices of third-party platforms.</p>
           </section>
-
           <section>
             <h3 className={`font-bold text-base mb-1 ${heading}`}>5. Data Security</h3>
             <p>We take reasonable technical and organizational measures to protect your personal information from unauthorized access, disclosure, or misuse. However, no method of transmission over the internet is 100% secure.</p>
           </section>
-
           <section>
             <h3 className={`font-bold text-base mb-1 ${heading}`}>6. Your Rights</h3>
             <p>You have the right to request access to, correction of, or deletion of your personal data at any time. To exercise these rights, please contact us directly via our website or WhatsApp.</p>
           </section>
-
           <section>
             <h3 className={`font-bold text-base mb-1 ${heading}`}>7. Contact Us</h3>
             <p>If you have any questions about this Privacy Policy, please reach out to us through our website's booking system or social media channels.</p>
@@ -318,7 +305,14 @@ export default function Footer() {
   const iconBg   = isDark ? "bg-white/8 border-white/15" : "bg-amber-100/60 border-amber-300";
   const iconFill = isDark ? "fill-white/60 group-hover:fill-white" : "fill-amber-900 group-hover:fill-white";
 
-  const scrollTo = (id) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+  // ✅ Navbar-accurate scroll
+  const scrollTo = (id) => {
+    const el  = document.getElementById(id);
+    const nav = document.querySelector("nav");
+    if (!el) return;
+    const top = el.getBoundingClientRect().top + window.scrollY - (nav?.offsetHeight || 76) - 8;
+    window.scrollTo({ top, behavior: "smooth" });
+  };
 
   const navLinks = [
     { label: "Home",         id: "home"         },
@@ -332,24 +326,21 @@ export default function Footer() {
     <>
       {showPrivacy && <PrivacyModal isDark={isDark} onClose={() => setShowPrivacy(false)} />}
 
-      <footer className={`relative border-t py-10 px-4 sm:px-6 overflow-hidden ${border}`}>
+      <footer className={`relative border-t overflow-hidden ${border}`}>
         {isDark ? <SpaceCanvas /> : <SandCanvas />}
 
-        <div className="relative z-10 max-w-7xl mx-auto flex flex-col gap-8">
+        {/* ── Same padding as Navbar: px-6 sm:px-8, no max-width cap ── */}
+        <div className="relative z-10 w-full px-6 sm:px-8 py-10 flex flex-col gap-8">
+          <div className="flex flex-col md:flex-row items-center md:items-start">
 
-          {/* Top row */}
-          <div className="flex flex-col md:flex-row justify-between items-center md:items-start gap-8">
-
-            {/* Logo + tagline */}
-            <div className="flex flex-col items-center md:items-start gap-1 text-center md:text-left">
-              <div className="flex items-center gap-2">
-                <img src="/notionnik.svg" alt="Notionnik Logo" className="h-8 w-auto object-contain" />
-                <span className={`font-bold text-xl tracking-wide ${textMain}`}>Notionnik</span>
-              </div>
+            {/* Logo — pinned to the left edge */}
+            <div className="flex items-center gap-2">
+              <img src="/notionnik.svg" alt="NotionNik Logo" className="h-8 w-auto object-contain" />
+              <span className={`font-bold text-xl tracking-wide ${textMain}`}>NotionNik</span>
             </div>
 
-            {/* Nav links */}
-            <div className="flex flex-wrap justify-center gap-3 sm:gap-5 text-sm">
+            {/* Nav links — flex-1 centers them between logo and socials */}
+            <div className="flex flex-1 flex-wrap justify-center gap-3 sm:gap-5 text-sm mt-6 md:mt-0">
               {navLinks.map((link) => (
                 <button key={link.id} onClick={() => scrollTo(link.id)}
                   className={`font-medium transition-colors duration-200 bg-transparent border-none cursor-pointer ${textLink}`}>
@@ -359,7 +350,7 @@ export default function Footer() {
             </div>
 
             {/* Socials */}
-            <div className="flex flex-col items-center gap-2">
+            <div className="flex flex-col items-center gap-2 mt-6 md:mt-0">
               <p className={`text-xs font-semibold tracking-widest uppercase ${textSub}`}>Find Us</p>
               <div className="flex gap-3">
 
@@ -412,13 +403,14 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Bottom bar */}
-          <div className={`border-t pt-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs ${isDark ? "border-white/8" : "border-amber-300/40"}`}>
-            <p className={textSub}>© {new Date().getFullYear()} Notionnik. All rights reserved.</p>
+          {/* ── Bottom bar ── */}
+          <div className={`relative border-t pt-5 flex items-center justify-between text-xs ${isDark ? "border-white/8" : "border-amber-300/40"}`}>
+            <p className={textSub}>© {new Date().getFullYear()} NotionNik. All rights reserved.</p>
             <button onClick={() => setShowPrivacy(true)}
-              className={`font-medium transition-colors duration-200 bg-transparent border-none cursor-pointer ${textLink}`}>
+              className={`font-medium transition-colors duration-200 bg-transparent border-none cursor-pointer absolute left-1/2 -translate-x-1/2 ${textLink}`}>
               🔒 Privacy Policy
             </button>
+            <div />
           </div>
 
         </div>
