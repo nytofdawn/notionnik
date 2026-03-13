@@ -1,6 +1,7 @@
 import { useTheme } from "./ThemeContext";
 import { useState, useEffect } from "react";
 
+
 const API_BASE         = import.meta.env.VITE_API_URL || "";
 const NOTION_PROXY_URL = `${API_BASE}/api/notion-services`;
 const PER_PAGE         = 6;
