@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     proxy: {
-      "/api": "http://localhost:3001"
+      "/api": "https://notionnik-backend.onrender.com"
     }
   }
 })
